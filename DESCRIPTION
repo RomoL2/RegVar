@@ -1,0 +1,25 @@
+Package: CharVar
+Title: Characterize 3' Untranslated Region Variants by Their Putative Regulatory Elements
+Version: 0.0.0.9000
+Authors@R: 
+    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"),
+           comment = c(ORCID = "YOUR-ORCID-ID"))
+Description: A program to characterize 3' Untranslated Region variants by their
+    potential regulatory elements. Takes as input canonical 3'UTR variants in a variant call file.
+    Gives as output the variant alternatively polyadenylated isoform location; whether the variant 
+    is in an enhanced crosslinking immunoprecipitation (eCLIP) peak, microRNA site, or RNA binding 
+    protein motif; any nearby ClinVar, expressed quantitative trait loci (eQTL), or genome wide 
+    association study (GWAS) variants; and whether the variant is predicted to be an eQTL or GWAS 
+    variant.
+License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
+    license
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.2
+Imports: 
+    data.table,
+    reticulate,
+    stringi,
+    stringr
+Depends: 
+    R (>= 2.10)

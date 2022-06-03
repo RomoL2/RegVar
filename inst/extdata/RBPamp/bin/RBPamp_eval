@@ -1,0 +1,185 @@
+#!/usr/bin/env python
+import RBPamp
+from RBPamp import __version__, __license__, __authors__, __email__
+
+import sys
+import os
+import copy
+import time
+import itertools
+import traceback
+import logging
+import collections
+import numpy as np
+import logging
+logging.basicConfig(level=logging.DEBUG)
+# import matplotlib
+# matplotlib.use('agg')
+
+def parse_cmdline():
+    import datetime
+    datestr = datetime.datetime.now().strftime("%b-%d-%Y_%H:%M:%S")
+
+    from argparse import ArgumentParser
+    usage = "usage: {prog} [options] [files]"
+
+    parser = ArgumentParser(usage=usage)
+    # basic options
+    parser.add_argument('models', metavar='models', type=str, nargs='+', help='one or more PSAM sets to score')
+    parser.add_argument("--version", dest="version", default=False, action="store_true", help="show version information and quit")
+    parser.add_argument("--realm", dest="realm", default='hg19/gencode28')
+    parser.add_argument("--maxhit", dest="maxhit", default=False, action="store_true", help="report the window with highest motif score")
+    parser.add_argument("--bed", dest="bed", default="", help="scan the records in this BED file")
+    parser.add_argument("--fasta", dest="fasta", default="", help="scan the records in this FASTA file")
+    parser.add_argument("--txt", dest="txt", default="", help="scan the sequences in this raw text file")
+    parser.add_argument("--hist", dest="hist", default="", help="plot a histogram of affinities")
+    parser.add_argument("--rna-conc", dest="rna_conc", default=1000., type=float, help="concentration of RNA in nM (default=1000)")
+    args = parser.parse_args()
+    
+    if args.version:
+        print(RBPamp.__name__, __version__, "git", RBPamp.git_commit())
+        print(__license__, "license")
+        print("by", ", ".join(__authors__))
+        sys.exit(0)
+
+    return args
+
+
+def fasta_chunks(lines, strip=True, fuse=True):
+    chunk = ""
+    data = []
+
+    for l in lines:
+        if l.startswith("#"): continue
+        if l.startswith(">"):
+            if data and chunk:
+                #print chunk
+                yield chunk, "".join(data)
+
+                if strip:
+                    data = []
+                else:
+                    data = [l]
+
+            chunk = l[1:].strip()
+        else:
+            if fuse:
+                data.append(l.rstrip())
+            else:
+                data.append(l)
+
+    if data and chunk:
+        yield chunk, "".join(data)
+
+
+import numpy as np
+from RBPamp.util import load_model, eval_model
+
+
+args = parse_cmdline()
+system = args.realm.split('/')[0]
+names = [os.path.splitext(os.path.basename(a))[0] for a in args.models]
+if args.maxhit:
+    print("# chrom\tstart\tend\tname\tmax_aff\tstrand\ttotal_aff\tfrac_total")
+else:
+    print("\t".join(['# name','length'] + names))
+
+models = [load_model(a, sort=True) for a in args.models]
+for m, n in zip(models, names):
+    m.name = n
+
+
+if args.bed:
+    from byo.gene_model import from_bed6
+    for bed in from_bed6(args.bed, system=system):
+        seq = bed.spliced_sequence
+        if args.maxhit:
+            for M in models:
+                scores = eval_model(M, seq)
+                s_total = scores.sum()
+                s_max = scores.max()
+                start = scores.argmax()
+                end = start + M.k
+
+                gstart, gend = bed.map_block_from_spliced(start, end)
+                name = f"{bed.name}__{M.name}"
+                out = [bed.chrom, gstart, gend, name, s_max, bed.strand, s_total, s_max/s_total]
+                print("\t".join([str(o) for o in out]))
+        else:
+            scores = [eval_model(M, seq).sum() for M in models]
+            out = [bed.name, len(seq)] + scores
+            print("\t".join([str(o) for o in out]))
+
+elif args.fasta:
+    # print('f')
+    for fa_id, seq in fasta_chunks(open(args.fasta)):
+        # print(f"{fa_id} {seq}")
+        scores = [eval_model(M, seq).sum() for M in models]
+        out = [fa_id, len(seq)] + scores
+        print("\t".join([str(o) for o in out]))
+
+if args.txt:
+    from RBPamp.reads import RBNSReads
+    import RBPamp.report
+    import matplotlib.pyplot as plt
+
+    n_bins = 200
+    reads = RBNSReads(args.txt, rna_conc=args.rna_conc, n_max=100000)
+    w = np.ones(reads.N) * (1. / reads.N)
+
+    max_Kd = 1e7 # 10 mM
+    min_Kd = .1 # 10 pM 
+
+    bins = 10 ** np.linspace(np.log10(min_Kd), np.log10(1.1*max_Kd), n_bins)
+    x = (bins[1:] + bins[:-1])/2
+
+    xticks = [1, 10, 100, 1000, 10000, 100000]
+    # xtick_labels = ["1", "", r"$10^2$", "", r"$10^4$", "", "", ""]
+    xtick_labels = ["", "10", "", r"$10^3$", "", r"$10^5$"]
+
+    # plt.figure(figsize=(1.5, 1.5))
+    # plt.subplots_adjust(hspace=-.2)
+
+    fig, (ax_leg, ax) = plt.subplots(nrows=2, figsize=(1.8, 2.25))
+
+    ax.set_xscale('log')
+    colors = plt.get_cmap('viridis')(np.linspace(0, 1, num=len(models)))
+
+    leg_items = []
+    leg_labels = []
+    for params, color in zip(models, colors):
+        print(params.name, "eval")
+        Z1 = reads.PSAM_partition_function(params, full_reads=True)
+        Z1_read = Z1.sum(axis=1)
+        # print(w)
+        ## plot affinity distribution of binding sites in RNA pool
+        print("plot")
+        Kd_binned = ax.hist(
+            1./(Z1_read), 
+            bins=bins, 
+            histtype='step', 
+            cumulative=True,
+            weights=w,
+            color=color,
+        )[-1]
+        
+        leg_labels.append(params.name)
+        leg_items.append(Kd_binned[0])
+
+    ax_leg.axis('off')
+    ax_leg.legend(leg_items, leg_labels, loc='lower center', ncol=2)
+
+    ax.set_ylabel('cumulative\nfraction of RNA pool')
+    ax.set_xlabel(r'rel. $K_d$')
+    # plt.locator_params(axis='x', numticks=3)
+
+    ax.set_xticks(xticks)
+    ax.set_xticklabels(xtick_labels)
+    ax.set_xlim(1, 1E6)
+
+    plt.tight_layout()
+    plt.savefig('hists.pdf')
+
+
+        
+

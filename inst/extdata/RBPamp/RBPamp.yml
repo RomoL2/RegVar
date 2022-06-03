@@ -1,0 +1,37 @@
+channels:
+  - conda-forge
+  - fastai
+  - bioconda
+dependencies:
+  - r-base=4.0.3
+  - python
+  - jupyterlab
+  - jupyter
+  - ipykernel
+  - r-curl
+  - r-pbdzmq
+  - r-ashr               
+  - numpy
+  - scipy
+  - matplotlib
+  - seaborn
+  - pandas
+  - pyranges
+  - rpy2
+  - statsmodels
+  - tqdm
+  - pyfastx
+  - pybigwig
+  - nbdev<1
+  - nbconvert<6
+  - pyfaidx
+  - biopython
+  - pymc3<=10
+  - pysam
+  - ncls
+  - networkx
+  - pyfastx
+  - h5py
+  - python-levenshtein
+
+

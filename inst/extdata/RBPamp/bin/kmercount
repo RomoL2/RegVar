@@ -1,0 +1,75 @@
+#!/usr/bin/env python2
+from RBPamp.reads import RBNSReads
+from RBPamp.cyska import index_to_seq
+from RBPamp.caching import CachedBase
+#CachedBase._do_not_cache = True
+CachedBase._do_not_pickle = True
+CachedBase._do_not_unpickle = True
+
+import os, sys
+import logging
+logging.basicConfig(level=logging.DEBUG)
+
+from optparse import OptionParser
+usage = "usage: %prog [options] <input_reads_file> <pulldown_reads_file1> [<pulldown_reads_file2] [...]"
+
+parser = OptionParser(usage=usage)
+parser.add_option("-k","",dest="k",default=5,type=int,help="kmer size (default=5)")
+parser.add_option("-K","--max-k",dest="max_k",default=8,type=int,help="max kmer size (default=8)")
+parser.add_option("-m","--mode",dest="mode",default='count', choices=['count', 'rfreq', 'freq', 'conc'],help="what to report (default='count')")
+parser.add_option("","--ska-max-passes",dest="n_passes",default=10,type=int,help="max number of passes (default=10)")
+parser.add_option("-r","--rna-concentration",dest="rna_conc",default=1000.,type=float,help="concentration of random RNA used in the experiment in nano molars (default=1uM)")
+parser.add_option("-p","--rbp-concentration",dest="prot_conc",default="0,320",help="(comma separated list of) protein concentration used in the experiment(s) in nano molars (default=0,300)")
+parser.add_option("","--name",dest="name",default="RBP",help="name of the protein assayed (default=RBP)")
+parser.add_option("","--subsamples",dest="subsamples",default=10,type=int,help="number of subsamples for error estimation (default=10)")
+parser.add_option("","--pseudo",dest="pseudo",default=10.,type=float,help="pseudo count to add to kmer counts in order to avoid div by zero for large k (default=10)")
+parser.add_option("","--ska-convergence",dest="convergence",default=0.5,type=float,help="convergence is reached when max. change in absolute weight is below this value (default=0.5)")
+parser.add_option("-o","--output",dest="output",default=".",help="path where results are to be stored")
+parser.add_option("","--debug",dest="debug",default=False, action="store_true",help="SWITCH: activate debug output")
+parser.add_option("","--interactions",dest="interactions",default=False, action="store_true",help="SWITCH: activate combinatorial search")
+parser.add_option("-w","--write-fasta",dest="write_fasta",default=False, action="store_true",help="SWITCH: write FASTA file for each library with isolated, top-scoring kmers")
+parser.add_option("-n","--n-max",dest="n_max",default=0, type=int,help="TESTING: read at most N reads")
+parser.add_option("","--disable-caching",dest="disable_caching",default=False, action="store_true",help="DEBUG: disable transparent caching (SLOW!)")
+parser.add_option("","--disable-unpickle",dest="disable_unpickle",default=False, action="store_true",help="DEBUG: disable unpickling. Will recompute and overwrite existing pickled data")
+parser.add_option("","--disable-pickle",dest="disable_pickle",default=False, action="store_true",help="DEBUG: disable pickling. Will not create or overwrite any pickled data")
+parser.add_option("","--debug-caching",dest="debug_caching",default=False, action="store_true",help="DEBUG: enable detailed debug output from the caching framework")
+parser.add_option("","--version",dest="version",default=False, action="store_true",help="show version information and quit")
+options,args = parser.parse_args()
+
+if options.version:
+    print __version__
+    print __license__
+    print "by", ", ".join(__authors__)
+    sys.exit(0)
+
+if not args:
+    parser.error("missing argument: need <reads_file> (or use /dev/stdin)")
+    sys.exit(1)
+
+R = [
+    RBNSReads(
+        a,
+        n_max=options.n_max, 
+        pseudo_count=options.pseudo, 
+        rna_conc = options.rna_conc,
+        n_subsamples = options.subsamples
+    )
+    for a in args
+]
+
+k = options.k
+Nk = 4**k
+func = {
+    'count' : lambda R : R.kmer_counts(k),
+    'freq' : lambda R : R.kmer_frequencies(k),
+    'rfreq' : lambda R : R.kmer_frequencies(k) / Nk,
+    'conc' : lambda R : R.kmer_frequencies(k)/Nk * R.rna_conc * (R.L - k + 1)
+}[options.mode]
+
+head = ["kmer",] + [os.path.basename(r.fname) for r in R]
+print "\t".join(head)
+for kmer_i, row in enumerate(zip(*[func(r) for r in R])):
+    kmer = index_to_seq(kmer_i, k)
+    out = "\t".join(["{:.3e}".format(x) for x in row])
+    print "{0}\t{1}".format(kmer, out)
+    
