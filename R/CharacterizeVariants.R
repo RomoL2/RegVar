@@ -432,6 +432,7 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_package) {
 
   #conservation info ----
   print('incorporating conservation scores')
+  cons_info<-data.table::fread('LR_all_APA_peak_coords_hg38_by_base.phylop_100.phylop_17.phastcons_100.phastcons_17.txt')
   cons_info[, base_id := paste(chrom, chromStart, chromEnd, sep='_')]
   cons_info<-cons_info[, .(base_id, phastcons_100, phylop_100)]
   data.table::setkey(cons_info, base_id)

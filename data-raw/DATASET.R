@@ -1,16 +1,15 @@
 ## code to prepare `DATASET`
-miR_predictions<-data.table::fread('hg38_miR_predictions_final.txt.gz')
+miR_predictions<-data.table::fread('hg38_miR_predictions_final.txt.gz') #conserved only
 miR_predictions<-miR_predictions[, c('mergekey', 'miR_family', 'seed_match', 'Pct', 'strand', 'context_pile', 'cons', 'i.cons')]
+#miR_predictions[, fam_con := data.table::tstrsplit(i.cons, '_')[[1]]]
+#miR_predictions<-miR_predictions[fam_con=='broadConsFam' | fam_con=='consFam']
 
 cadd_gd<-data.table::fread('all_gd_UTR_vars.bed.gz')
-
-cons_info<-data.table::fread('LR_all_APA_peak_coords_hg38_by_base.phylop_100.phylop_17.phastcons_100.phastcons_17.txt.gz')
-cons_info<-cons_info[, c('chrom', 'chromStart', 'chromEnd', 'phastcons_100', 'phylop_100')]
 
 #GLM for gwas/eqtl
 all_vcf<-data.table::fread('GTEx_v8_finemapping_DAPG_scottUTR_processed.txt.gz')
 #APA info
-poly_info <- data.table::fread('../CharVar/inst/extdata/all_APA_peak_coords_hg38.bed')
+poly_info <- data.table::fread('../CharVar/inst/extdata/all_APA_peak_coords_hg38.bed.gz')
 names(poly_info)<-c('chrom', 'isoStart', 'isoStop', 'gene', 'score', 'strand', 'number_isos', 'iso_loc', 'UTRstart', 'UTRstop')
 poly_info[, UTR_length:=UTRstop-UTRstart]
 UTR_lengths<-unique(poly_info[, c('gene', 'number_isos', 'UTR_length', 'UTRstart')])
@@ -115,6 +114,6 @@ train_gwas<-na.omit(train_gwas, cols=c('in_eclip', 'PAS_1', 'in_miR', 'phastcons
 gwas_model<-glm(pip_model~in_eclip+PAS+in_miR+cons+region+number_isos,
                 family  = binomial, data=train_gwas)
 
-##write system data
-usethis::use_data(miR_predictions, cadd_gd, cons_info, eqtl_model, gwas_model, overwrite=TRUE, compress = 'gzip', internal = TRUE)
+##write system data (in CharVar dir)
+usethis::use_data(miR_predictions, cadd_gd, eqtl_model, gwas_model, overwrite=TRUE, compress = 'gzip', internal = TRUE)
 

@@ -1,0 +1,9 @@
+clinvar_for_script.bed.gz filter=lfs diff=lfs merge=lfs -text
+eCLIP_peaks.GRCh38.IDR_pass.main_chr.HepG2.full_name.bed.gz filter=lfs diff=lfs merge=lfs -text
+eCLIP_peaks.GRCh38.IDR_pass.main_chr.K562.full_name.bed.gz filter=lfs diff=lfs merge=lfs -text
+GTEx_v8_finemapping_DAPG_UTR_for_script.bed.gz filter=lfs diff=lfs merge=lfs -text
+GWAS_UTR_for_script.bed.gz filter=lfs diff=lfs merge=lfs -text
+merged_by_strand_nat_sorted_vcf_UTR_tmp_expanded.bed.gz filter=lfs diff=lfs merge=lfs -text
+nat_sorted_vcf_UTR_tmp_intersected+expanded_RNA_strand2.bed.gz filter=lfs diff=lfs merge=lfs -text
+all_APA_peak_coords_hg38.bed.gz filter=lfs diff=lfs merge=lfs -text
+hg38_miR_predictions_final.bed.gz filter=lfs diff=lfs merge=lfs -text
