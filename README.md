@@ -17,7 +17,7 @@ install_github("RomoL2/CharVar")
 
 ## Example
 
-First use install_reqs to install the hg38 fasta, the required conda environment for RBPamp, and RBPamp, then characterized variants in a standard vcf file:
+First use install_reqs (this will install the hg38 fasta, the required conda environment for RBPamp, and RBPamp). Then characterize variants in a standard vcf file with CharacterizeVariants:
 
 ``` r
 library(CharVar)
