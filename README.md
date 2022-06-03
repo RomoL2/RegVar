@@ -8,7 +8,7 @@ The goal of CharVar is to characterize 3'UTR variants into their potential regul
 
 ## Installation
 
-You can install the development version of CharVar like so:
+First, make sure you have miniconda installed locally (https://docs.conda.io/en/latest/miniconda.html). You can then install the development version of CharVar like so:
 
 ``` r
 library(devtools) # Make sure that the devtools library is loaded
@@ -17,11 +17,11 @@ install_github("RomoL2/CharVar")
 
 ## Example
 
-This is a basic example which shows you how to solve a common problem:
+First use install_reqs to install the hg38 fasta, the required conda environment for RBPamp, and RBPamp, then characterized variants in a standard vcf file:
 
 ``` r
 library(CharVar)
-CharacterizeVariants('file.vcf', "~/", "~/data_files/")
 install_reqs('"~/CharVar")
+CharacterizeVariants('file.vcf', "~/", "~/data_files/")
 ```
 
