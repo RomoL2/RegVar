@@ -2,7 +2,6 @@
 
 export(CharacterizeVariants)
 export(installRBPamp)
-import("")
 importFrom(data.table,":=")
 importFrom(data.table,.BY)
 importFrom(data.table,.EACHI)
