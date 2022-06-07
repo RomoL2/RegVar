@@ -171,8 +171,9 @@ CharacterizeVariants_single_input <- function(path_to_package, path_to_output) {
     vcf_UTR<-miR_predictions[vcf_UTR]
     vcf_UTR[, mergekey := NULL]
     #miR_info column: miR_family__seed_match__Pct__strand__context_pile__familycons__sitecons
-    rm(miR_predictions)
   }
+  rm(miR_predictions)
+
   #RBP affinity scoring with RBPamp (need installed locally first)----
   print('incorporating RBP motifs')
   ##prep variants ----

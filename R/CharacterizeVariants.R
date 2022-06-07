@@ -17,7 +17,10 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_package) {
   project_dir<-stringr::str_extract(project_dir[1], '.*extdata.')
   setwd(project_dir)
   vcf<-data.table::fread(paste(path_to_filename, filename, sep='/'))
-  system('gunzip *.gz')
+  files<-list.files(path='.', pattern='*.gz')
+  if (length(files)>0) {
+    system('gunzip *.gz')
+  }
   ##turn vcf into bed and intersect with 3'UTR (bedtools)
   names(vcf)<-c('chrom', 'chromEnd', 'name', 'ref', 'alt', 'qual', 'filter', 'info')
   vcf[, c('qual', 'filter') := NULL]
@@ -26,7 +29,9 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_package) {
     vcf[, chrom := paste('chr', chrom, sep='')]
   }
   #keep only SNVs
+  if (nrow(vcf[nchar(ref)!=1 & nchar(alt)!=1,])>0) warning('some variants are not single nucleotide')
   vcf<-vcf[nchar(ref)==1 & nchar(alt)==1,]
+  if( nrow(vcf)==0 ) stop('all variants are not single nucleotide')
   vcf[, chromStart := chromEnd-1]
   vcf[, name := paste(ref, alt, info, sep='__')]
   vcf<-vcf[, c('chrom', 'chromStart', 'chromEnd', 'name')]
@@ -35,7 +40,8 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_package) {
   #intersect with UTR (3pseq and ucsc)
   system('bedtools intersect -a vcf.bed -b all_APA_peak_coords_hg38.bed -wa -wb > vcf_UTR.bed')
   vcf_UTR<-data.table::fread('vcf_UTR.bed')
-  #something here to report if this file is empty, no UTR variants
+  if(nrow(vcf_UTR)==0 ) stop('variants are not in our canonical UTR coordinates')
+  if(nrow(vcf_UTR)!=nrow(vcf)) warning('some variants are not in canonical UTR coordinates')
   names(vcf_UTR)<-c('chrom', 'chromStart', 'chromEnd', 'info',
                     'chr2', 'isoStart', 'isoStop', 'gene', 'score', 'strand',
                     'number_isos', 'iso_loc', 'UTRstart', 'UTRstop')
@@ -48,21 +54,34 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_package) {
   #intersect with hepg2 and k562 total eclip
   system("bedtools intersect -a vcf_UTR_tmp.bed -b eCLIP_peaks.GRCh38.IDR_pass.main_chr.HepG2.full_name.bed -wa -wb > vcf_UTR_tmp_hepg2.txt")
   system("bedtools intersect -a vcf_UTR_tmp.bed -b eCLIP_peaks.GRCh38.IDR_pass.main_chr.K562.full_name.bed -wa -wb > vcf_UTR_tmp_k562.txt")
-  vcf_UTR_hepg2<-data.table::fread('vcf_UTR_tmp_hepg2.txt')
-  vcf_UTR_hepg2<-vcf_UTR_hepg2[, c('V4', 'V8')]
-  names(vcf_UTR_hepg2)<-c('tmp_key', 'eclip_id')
-  vcf_UTR_hepg2[, tot_eclip_RBP:=data.table::tstrsplit(eclip_id, '_')[1]]
-  vcf_UTR_hepg2[, tot_eclip_RBP:=paste(tot_eclip_RBP, 'HepG2', sep='_')]
-  vcf_UTR_k562<-data.table::fread('vcf_UTR_tmp_k562.txt')
-  vcf_UTR_k562<-vcf_UTR_k562[, c('V4', 'V8')]
-  names(vcf_UTR_k562)<-c('tmp_key', 'eclip_id')
-  vcf_UTR_k562[, tot_eclip_RBP:=data.table::tstrsplit(eclip_id, '_')[1]]
-  vcf_UTR_k562[, tot_eclip_RBP:=paste(tot_eclip_RBP, 'K562', sep='_')]
+  suppressWarnings(vcf_UTR_hepg2<-data.table::fread('vcf_UTR_tmp_hepg2.txt'))
+  if (nrow(vcf_UTR_hepg2>0)) {
+    vcf_UTR_hepg2<-vcf_UTR_hepg2[, c('V4', 'V8')]
+    names(vcf_UTR_hepg2)<-c('tmp_key', 'eclip_id')
+    vcf_UTR_hepg2[, tot_eclip_RBP:=data.table::tstrsplit(eclip_id, '_')[1]]
+    vcf_UTR_hepg2[, tot_eclip_RBP:=paste(tot_eclip_RBP, 'HepG2', sep='_')]
+  }
+  suppressWarnings(vcf_UTR_k562<-data.table::fread('vcf_UTR_tmp_k562.txt'))
+  if (nrow(vcf_UTR_k562>0)) {
+    vcf_UTR_k562<-vcf_UTR_k562[, c('V4', 'V8')]
+    names(vcf_UTR_k562)<-c('tmp_key', 'eclip_id')
+    vcf_UTR_k562[, tot_eclip_RBP:=data.table::tstrsplit(eclip_id, '_')[1]]
+    vcf_UTR_k562[, tot_eclip_RBP:=paste(tot_eclip_RBP, 'K562', sep='_')]
+  }
+
   #add info to vcf_UTR
   vcf_UTR[, eclip_tot:='']
   for (n in 1:nrow(vcf_UTR)) {
-    matches_k562<-vcf_UTR_k562[tmp_key==vcf_UTR$tmp_key[n]]$tot_eclip_RBP
-    matches_hepg2<-vcf_UTR_hepg2[tmp_key==vcf_UTR$tmp_key[n]]$tot_eclip_RBP
+    if (nrow(vcf_UTR_k562)>0) {
+      matches_k562<-vcf_UTR_k562[tmp_key==vcf_UTR$tmp_key[n]]$tot_eclip_RBP
+    } else (
+      matches_k562<-data.table::data.table()
+    )
+    if (nrow(vcf_UTR_hepg2)>0) {
+      matches_hepg2<-vcf_UTR_hepg2[tmp_key==vcf_UTR$tmp_key[n]]$tot_eclip_RBP
+    } else(
+      matches_hepg2<-data.table::data.table()
+    )
     if (length(matches_k562)>0 & length(matches_hepg2)>0) {
       all_matches<-paste(paste(matches_k562, collapse='__'), paste(matches_hepg2, collapse='__'), sep='__')
       vcf_UTR[n, eclip_tot:=all_matches]
@@ -86,14 +105,16 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_package) {
   #write bed file for intersect, then match back to original
   data.table::fwrite(vcf_UTR[, c('chrom', 'chromStart', 'chromEnd', 'tmp_key')], 'vcf_UTR_tmp.bed', col.names=FALSE, row.names=FALSE, quote=FALSE, sep='\t')
   system('bedtools intersect -a vcf_UTR_tmp.bed -b GTEx_v8_finemapping_DAPG_UTR_for_script.bed -wa -wb > vcf_UTR_eqtls.bed')
-  tmp<-data.table::fread('vcf_UTR_eqtls.bed')
-  names(tmp)<-c('chrom', 'chromStart', 'chromEnd', 'tmp_key', 'chr2', 'window_start', 'window_stop', 'eqtl_info')
-  tmp<-unique(tmp[, .(tmp_key, eqtl_info)]) #eqtls have 3pseq coords, 10bp window around eqtl
+  suppressWarnings(tmp<-data.table::fread('vcf_UTR_eqtls.bed'))
+  if (nrow(tmp)>0) {
+    names(tmp)<-c('chrom', 'chromStart', 'chromEnd', 'tmp_key', 'chr2', 'window_start', 'window_stop', 'eqtl_info')
+    tmp<-unique(tmp[, .(tmp_key, eqtl_info)]) #eqtls have 3pseq coords, 10bp window around eqtl
 
-  #add to vcf file
-  data.table::setkey(tmp, tmp_key)
-  data.table::setkey(vcf_UTR, tmp_key)
-  vcf_UTR<-vcf_UTR[tmp]
+    #add to vcf file
+    data.table::setkey(tmp, tmp_key)
+    data.table::setkey(vcf_UTR, tmp_key)
+    vcf_UTR<-vcf_UTR[tmp]
+  }
 
   #eqtl info column: chromStart_chromEnd_ref_alt_signalid@tissue_name= PIP[SPIP:size_of_cluster]
   # more specifically:
@@ -109,14 +130,16 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_package) {
   vcf_UTR[, tmp_key := seq(1:nrow(vcf_UTR))]
   data.table::fwrite(vcf_UTR[, c('chrom', 'chromStart', 'chromEnd', 'tmp_key')], 'vcf_UTR_tmp.bed', col.names=FALSE, row.names=FALSE, quote=FALSE, sep='\t')
   system('bedtools intersect -a vcf_UTR_tmp.bed -b GWAS_UTR_for_script.bed -wa -wb > vcf_UTR_gwas.bed')
-  tmp<-data.table::fread('vcf_UTR_gwas.bed')
-  names(tmp)<-c('chrom', 'chromStart', 'chromEnd', 'tmp_key', 'chr2', 'window_start', 'window_stop', 'gwas_info')
-  tmp<-unique(tmp[, .(tmp_key, gwas_info)])
+  suppressWarnings(tmp<-data.table::fread('vcf_UTR_gwas.bed'))
+  if (nrow(tmp)>0) {
+    names(tmp)<-c('chrom', 'chromStart', 'chromEnd', 'tmp_key', 'chr2', 'window_start', 'window_stop', 'gwas_info')
+    tmp<-unique(tmp[, .(tmp_key, gwas_info)])
 
-  #add to vcf file
-  data.table::setkey(tmp, tmp_key)
-  data.table::setkey(vcf_UTR, tmp_key)
-  vcf_UTR<-vcf_UTR[tmp]
+    #add to vcf file
+    data.table::setkey(tmp, tmp_key)
+    data.table::setkey(vcf_UTR, tmp_key)
+    vcf_UTR<-vcf_UTR[tmp]
+  }
   #gwas info column: chromStart, chromEnd, rsID, minor_allele, ref, alt, fine_map, pheno, maf, effect_size, pip
 
   #intersect with microRNAs from TargetScan----
@@ -124,27 +147,31 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_package) {
   vcf_UTR[, tmp_key := seq(1:nrow(vcf_UTR))]
   data.table::fwrite(vcf_UTR[, c('chrom', 'chromStart', 'chromEnd', 'tmp_key')], 'vcf_UTR_tmp.bed', col.names=FALSE, row.names=FALSE, quote=FALSE, sep='\t')
   system('bedtools intersect -a vcf_UTR_tmp.bed -b hg38_miR_predictions_final.bed -wa -wb > vcf_UTR_miRs.bed')
-  tmp<-data.table::fread('vcf_UTR_miRs.bed')
-  names(tmp)<-c('chrom', 'chromStart', 'chromEnd', 'tmp_key', 'chr2', 'miRstart', 'miRstop', 'mergekey')
-  tmp<-unique(tmp[, .(tmp_key, mergekey)])
+  suppressWarnings(tmp<-data.table::fread('vcf_UTR_miRs.bed'))
+  if (nrow(tmp)>0) {
+    names(tmp)<-c('chrom', 'chromStart', 'chromEnd', 'tmp_key', 'chr2', 'miRstart', 'miRstop', 'mergekey')
+    tmp<-unique(tmp[, .(tmp_key, mergekey)])
 
-  #add miR mergekey (unique key to match miR bed locations to full miR info file) to vcf file
-  data.table::setkey(tmp, tmp_key)
-  data.table::setkey(vcf_UTR, tmp_key)
-  vcf_UTR<-vcf_UTR[tmp]
+    #add miR mergekey (unique key to match miR bed locations to full miR info file) to vcf file
+    data.table::setkey(tmp, tmp_key)
+    data.table::setkey(vcf_UTR, tmp_key)
+    vcf_UTR<-vcf_UTR[tmp]
 
-  #merge with rest of miR info using mergekey
-  miR_predictions<-data.table::fread('hg38_miR_predictions_final.txt')
-  miR_predictions[, cons := substr(cons, 1, nchar(cons)-4)]
-  miR_predictions[, i.cons := substr(i.cons, 1, nchar(i.cons)-4)]
-  miR_predictions[, i.cons := data.table::tstrsplit(i.cons, '_')[[2]]]
-  miR_predictions[, miR_info := paste(miR_family, seed_match, Pct, strand, context_pile, cons, i.cons, sep='__')]
-  miR_predictions<-miR_predictions[, .(mergekey, miR_info)]
-  data.table::setkey(miR_predictions, mergekey)
-  data.table::setkey(vcf_UTR, mergekey)
-  vcf_UTR<-miR_predictions[vcf_UTR]
-  vcf_UTR[, mergekey := NULL]
-  #miR_info column: miR_family__seed_match__Pct__strand__context_pile__familycons__sitecons
+    #merge with rest of miR info using mergekey
+    miR_predictions<-data.table::fread('hg38_miR_predictions_final.txt')
+    #miR predictions only has conserved families to save disc space; remove non-conserved from vcf here
+    vcf_UTR<-vcf_UTR[mergekey %in% miR_predictions$mergekey,]
+    miR_predictions[, cons := substr(cons, 1, nchar(cons)-4)]
+    miR_predictions[, i.cons := substr(i.cons, 1, nchar(i.cons)-4)]
+    miR_predictions[, i.cons := data.table::tstrsplit(i.cons, '_')[[2]]]
+    miR_predictions[, miR_info := paste(miR_family, seed_match, Pct, strand, context_pile, cons, i.cons, sep='__')]
+    miR_predictions<-miR_predictions[, .(mergekey, miR_info)]
+    data.table::setkey(miR_predictions, mergekey)
+    data.table::setkey(vcf_UTR, mergekey)
+    vcf_UTR<-miR_predictions[vcf_UTR]
+    vcf_UTR[, mergekey := NULL]
+    #miR_info column: miR_family__seed_match__Pct__strand__context_pile__familycons__sitecons
+  }
   rm(miR_predictions)
 
   #RBP affinity scoring with RBPamp (need installed locally first)----
@@ -386,16 +413,17 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_package) {
   vcf_UTR[, tmp_key := seq(1:nrow(vcf_UTR))]
   data.table::fwrite(vcf_UTR[, c('chrom', 'chromStart', 'chromEnd', 'tmp_key')], 'vcf_UTR_tmp.bed', col.names=FALSE, row.names=FALSE, quote=FALSE, sep='\t')
   system('bedtools intersect -a vcf_UTR_tmp.bed -b clinvar_for_script.bed -wa -wb > vcf_UTR_clinvar.bed')
-  tmp<-data.table::fread('vcf_UTR_clinvar.bed')
-  names(tmp)<-c('chrom', 'chromStart', 'chromEnd', 'tmp_key', 'chr2', 'window_start', 'window_stop', 'clinvar_info')
-  tmp<-unique(tmp[, .(tmp_key, clinvar_info)])
+  suppressWarnings(tmp<-data.table::fread('vcf_UTR_clinvar.bed'))
+  if (nrow(tmp)>0) {
+    names(tmp)<-c('chrom', 'chromStart', 'chromEnd', 'tmp_key', 'chr2', 'window_start', 'window_stop', 'clinvar_info')
+    tmp<-unique(tmp[, .(tmp_key, clinvar_info)])
 
-  #add to vcf file
-  data.table::setkey(tmp, tmp_key)
-  data.table::setkey(vcf_UTR, tmp_key)
-  vcf_UTR<-vcf_UTR[tmp]
-  vcf_UTR[, tmp_key := NULL]
-  #clinvar info column:
+    #add to vcf file
+    data.table::setkey(tmp, tmp_key)
+    data.table::setkey(vcf_UTR, tmp_key)
+    vcf_UTR<-vcf_UTR[tmp]
+    vcf_UTR[, tmp_key := NULL]
+  }  #clinvar info column:
   ##INFO=<ID=CLNDNINCL,Number=.,Type=String,Description="For included Variant : ClinVar's preferred disease name for the concept specified by disease identifiers in CLNDISDB">
   ##INFO=<ID=CLNDISDB,Number=.,Type=String,Description="Tag-value pairs of disease database name and identifier, e.g. OMIM:NNNNNN">
   ##INFO=<ID=CLNDISDBINCL,Number=.,Type=String,Description="For included Variant: Tag-value pairs of disease database name and identifier, e.g. OMIM:NNNNNN">
