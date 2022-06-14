@@ -16,8 +16,8 @@ CharacterizeVariants_single_input <- function(path_to_output) {
   setwd(project_dir)
   chrom<-readline(prompt="Enter 3'UTR single nucleotide variant chromosome number: ")
   chromEnd<-as.numeric(readline(prompt="Enter variant position in 1-based coordinates: "))
-  ref<-readline(prompt="Enter hg38 reference base at variant position: ")
-  alt<-readline(prompt="Enter variant base: ")
+  ref<-readline(prompt="Enter hg38 reference base (capitalized) at variant position: ")
+  alt<-readline(prompt="Enter variant base (capitalized): ")
   info<-readline(prompt="Enter a name for this variant (no spaces): ")
   vcf<-data.table::data.table(chrom, chromEnd, ref, alt, info)
   files<-list.files(path='.', pattern='*.gz')
@@ -623,13 +623,15 @@ CharacterizeVariants_single_input <- function(path_to_output) {
     row<-cbind(matches, miR_info, gwas_info, clinvar_info)
     compressed_variants<-rbind(compressed_variants, row)
   }
+  #write output
+  print('writing output')
+  setwd(path_to_output)
+  data.table::fwrite(compressed_variants, paste('processed_', info, sep=''), sep = "\t", quote = FALSE, col.names = TRUE, row.names = FALSE)
   #rezip everything
+  print('compressing files; this may take a bit')
   system('gzip *.bed')
   system('gzip *.txt')
   system('gzip *.fa')
-  #write output
-  setwd(path_to_output)
-  data.table::fwrite(compressed_variants, paste('processed_', info, sep=''), sep = "\t", quote = FALSE, col.names = TRUE, row.names = FALSE)
   #clean workspace
   rm(list = ls())
 }
