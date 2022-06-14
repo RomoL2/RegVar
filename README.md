@@ -16,10 +16,12 @@ devtools::install_github("RomoL2/CharVar") #note, does not install large files
 ```
 
 Then, in the CharVar directory in command line install the necessary annotation files, like so:
+``` r
 cd /Library/Frameworks/R.framework/Versions/4.0/Resources/library/CharVar
-pip install github-clone 
-rm -r extdata 
-ghclone https://github.com/RomoL2/CharVar/tree/main/inst/extdata 
+pip install github-clone #needed to clone subdirectories
+rm -r extdata #remove directory with symbolic links
+ghclone https://github.com/RomoL2/CharVar/tree/main/inst/extdata #downlaod zipped annotation files
+```
 
 ## Example
 
