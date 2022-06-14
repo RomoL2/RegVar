@@ -25,7 +25,7 @@ ghclone https://github.com/RomoL2/CharVar/tree/main/inst/extdata #downlaod zippe
 
 ## Example
 
-First use install_reqs (this will install the hg38 fasta, the required conda environment for RBPamp, and RBPamp). Then characterize variants in a standard vcf file with CharacterizeVariants:
+First use install_reqs (this will install the hg38 fasta, the required conda environment for RBPamp, and RBPamp). Then characterize variants in a standard vcf file with CharacterizeVariants or a single user-input variant with CharacterizeVariants_single_input:
 
 ``` r
 library(CharVar)
