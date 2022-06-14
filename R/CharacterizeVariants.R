@@ -3,14 +3,14 @@
 #' @param filename The name of the input vcf file; must be tab delim with 8 columns:
 #' chrom, pos, id, ref, alt, qual, filter, info. Chrom column must be either a number (1) or chr# (chr1)
 #' @param path_to_filename The path to the directory where the filename is located
-#' @param path_to_package The path to the CharVar R package, check .libPaths if you aren't certain, https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/libPaths
 #' @param path_to_output The path to the directory where you would like the output written
 #' @return file with variant characterization, named processed_filename
 #' @examples
 #' CharacterizeVariants('file.vcf', '~/', '/Library/Frameworks/R.framework/Versions/4.0/Resources/library/CharVar', '~/');
 #' @import
 #' @export
-CharacterizeVariants <- function(filename, path_to_filename, path_to_package, path_to_output) {
+CharacterizeVariants <- function(filename, path_to_filename, path_to_output) {
+  path_to_package<-paste(.libPaths(), '/CharVar', sep='')
   #import and format vcf file (format of columns: chrom, chromEnd, name, ref, alt, info)----
   options(scipen = 999)
   setwd(path_to_package)

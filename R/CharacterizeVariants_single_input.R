@@ -1,13 +1,13 @@
 #' 3'UTR variant characterization
 #'
-#' @param path_to_package The path to the CharVar R package, check .libPaths if you aren't certain, https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/libPaths
 #' @param path_to_output The path to the directory where you would like the output file written
 #' @return output file with variant characterization, named processed_chrom_chromEnd_ref_alt
 #' @examples
 #' CharacterizeVariants_single_input("/Library/Frameworks/R.framework/Versions/4.0/Resources/library/CharVar", "~/");
 #' @import
 #' @export
-CharacterizeVariants_single_input <- function(path_to_package, path_to_output) {
+CharacterizeVariants_single_input <- function(path_to_output) {
+  path_to_package<-paste(.libPaths(), '/CharVar', sep='')
   #import and format vcf file (format of columns: chrom, chromEnd, name, ref, alt, info)----
   options(scipen = 999)
   setwd(path_to_package)
