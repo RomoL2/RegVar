@@ -13,13 +13,13 @@ First, make sure you have miniconda as well as bedtools installed locally (https
 ``` r
 #first, install R package: 
 devtools::install_github("RomoL2/CharVar") #note, does not install large files
-
-#Then, in the CharVar directory in command line install the necessary files, for example:
-pip install github-clone #installs the package to clone subdirectories
-cd /Library/Frameworks/R.framework/Versions/4.0/Resources/library/CharVar
-rm -r extdata #removes the sym link files from github
-ghclone https://github.com/RomoL2/CharVar/tree/main/inst/extdata #downloads the real gz zipped files to the correct directory
 ```
+
+Then, in the CharVar directory in command line install the necessary annotation files, like so:
+cd /Library/Frameworks/R.framework/Versions/4.0/Resources/library/CharVar
+pip install github-clone 
+rm -r extdata 
+ghclone https://github.com/RomoL2/CharVar/tree/main/inst/extdata 
 
 ## Example
 
