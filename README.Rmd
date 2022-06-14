@@ -24,15 +24,21 @@ The goal of CharVar is to characterize 3'UTR variants into their potential regul
 
 You can install the development version of CharVar like so:
 
+First, make sure you have miniconda, pip, and bedtools installed locally (https://docs.conda.io/en/latest/miniconda.html, https://pip.pypa.io/en/stable/installation/, https://bedtools.readthedocs.io/en/latest/content/installation.html). You can then install the development version of CharVar like so:
+
 ``` r
 #first, install R package: 
 devtools::install_github("RomoL2/CharVar") #note, does not install large files
+```
 
-#Then, in the CharVar directory in command line install the necessary files, for example:
-pip install github-clone #installs the package to clone subdirectories
+Then, in the CharVar directory in command line install the necessary annotation files, like so (if you are not sure where this directory is, try .libPaths() in R):
+``` r
 cd /Library/Frameworks/R.framework/Versions/4.0/Resources/library/CharVar
-rm -r extdata #removes the sym link files from github
-ghclone https://github.com/RomoL2/CharVar/tree/main/inst/extdata #downloads the real gz zipped files to the correct directory
+mkdir tmp
+git clone https://github.com/RomoL2/CharVar ./tmp #clones repository into temporary directory
+rm -r extdata #remove directory with symbolic links
+mv tmp/inst/extdata ./ #replace with directory with real annotation files
+rm -r tmp #ok to override, type "y" #remove temporary directory
 ```
 
 ## Example
@@ -40,7 +46,6 @@ ghclone https://github.com/RomoL2/CharVar/tree/main/inst/extdata #downloads the 
 This is a basic example which shows you how to solve a common problem:
 
 ```{r example}
-library(CharVar)
 library(CharVar)
 install_reqs('/Library/Frameworks/R.framework/Versions/4.0/Resources/library/CharVar')
 CharacterizeVariants('file.vcf', '~/', '/Library/Frameworks/R.framework/Versions/4.0/Resources/library/CharVar', '~/')

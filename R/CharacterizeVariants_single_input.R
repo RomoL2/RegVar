@@ -628,8 +628,7 @@ CharacterizeVariants_single_input <- function(path_to_output) {
   system('gzip *.fa')
   #write output
   setwd(path_to_output)
-  filename<-paste(chrom, chromEnd, ref, alt, sep='_')
-  data.table::fwrite(compressed_variants, paste('processed_', filename, sep=''), sep = "\t", quote = FALSE, col.names = TRUE, row.names = FALSE)
+  data.table::fwrite(compressed_variants, paste('processed_', info, sep=''), sep = "\t", quote = FALSE, col.names = TRUE, row.names = FALSE)
   #clean workspace
   rm(list = ls())
 }
