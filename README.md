@@ -11,8 +11,14 @@ The goal of CharVar is to characterize 3'UTR variants into their potential regul
 First, make sure you have miniconda as well as bedtools installed locally (https://docs.conda.io/en/latest/miniconda.html, https://bedtools.readthedocs.io/en/latest/content/installation.html). You can then install the development version of CharVar like so:
 
 ``` r
-library(devtools) # Make sure that the devtools library is loaded
-install_github("RomoL2/CharVar")
+#first, install R package: 
+devtools::install_github("RomoL2/CharVar") #note, does not install large files
+
+#Then, in the CharVar directory in command line install the necessary files, for example:
+pip install github-clone #installs the package to clone subdirectories
+cd /Library/Frameworks/R.framework/Versions/4.0/Resources/library/CharVar
+rm -r extdata #removes the sym link files from github
+ghclone https://github.com/RomoL2/CharVar/tree/main/inst/extdata #downloads the real gz zipped files to the correct directory
 ```
 
 ## Example
