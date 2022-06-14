@@ -39,7 +39,7 @@ CharacterizeVariants_single_input <- function(path_to_package, path_to_output) {
 
   #intersect with UTR (3pseq and ucsc)
   system('bedtools intersect -a vcf.bed -b all_APA_peak_coords_hg38.bed -wa -wb > vcf_UTR.bed')
-  vcf_UTR<-data.table::fread('vcf_UTR.bed')
+  suppressWarnings(vcf_UTR<-data.table::fread('vcf_UTR.bed'))
   if( nrow(vcf_UTR)==0 ) stop('variant is not in our canonical UTR coordinates')
   names(vcf_UTR)<-c('chrom', 'chromStart', 'chromEnd', 'info',
                     'chr2', 'isoStart', 'isoStop', 'gene', 'score', 'strand',
