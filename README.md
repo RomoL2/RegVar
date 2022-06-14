@@ -8,7 +8,7 @@ The goal of CharVar is to characterize 3'UTR variants into their potential regul
 
 ## Installation
 
-First, make sure you have miniconda as well as bedtools installed locally (https://docs.conda.io/en/latest/miniconda.html, https://bedtools.readthedocs.io/en/latest/content/installation.html). You can then install the development version of CharVar like so:
+First, make sure you have miniconda, pip, and bedtools installed locally (https://docs.conda.io/en/latest/miniconda.html, https://pip.pypa.io/en/stable/installation/, https://bedtools.readthedocs.io/en/latest/content/installation.html). You can then install the development version of CharVar like so:
 
 ``` r
 #first, install R package: 
