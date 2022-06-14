@@ -1,14 +1,12 @@
-#' RBPamp installation (requires miniconda)
+#' RBPamp installation, requires miniconda
 #'
-#' @param path_to_filename The path to the directory where the filename is located
-#' @param path_to_package The path to the R package
-#' @return conda environment ('RBPamp') with RBPamp installed, hg38 fasta (~400MB)
+#' @param path_to_package The path to the CharVar R package, check .libPaths if you aren't certain, https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/libPaths
+#' @return conda environment- 'RBPamp'- with RBPamp installed, and hg38 fasta installed, ~400MB disc space
 #' @examples
-#' install_reqs('"~/CharVar");
+#' install_reqs('/Library/Frameworks/R.framework/Versions/4.0/Resources/library/CharVar');
 #' @import
-#'
 #' @export
-installRBPamp <- function(path_to_package) {
+install_reqs <- function(path_to_package) {
   setwd(path_to_package)
   project_dir<-list.files(pattern = "fai$", recursive = TRUE)[1]
   project_dir<-stringr::str_extract(project_dir[1], '.*extdata.')

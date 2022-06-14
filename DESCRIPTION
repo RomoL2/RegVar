@@ -2,8 +2,8 @@ Package: CharVar
 Title: Characterize 3' Untranslated Region Variants by Their Putative Regulatory Elements
 Version: 0.0.0.9000
 Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
+    person("Lindsay", "Romo", , "lindsay.romo@childrens.harvard.edu", role = c("aut", "cre"),
+           comment = c(ORCID = ""))
 Description: A program to characterize 3' Untranslated Region variants by their
     potential regulatory elements. Takes as input canonical 3'UTR variants in a variant call file.
     Gives as output the variant alternatively polyadenylated isoform location; whether the variant 

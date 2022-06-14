@@ -1,10 +1,10 @@
 #' 3'UTR variant characterization
 #'
-#' @param path_to_package The path to the R package
-#' #' @param path_to_output The path to the directory where you would like the output written
-#' #' @return file with variant characterization: processed_variant_name
+#' @param path_to_package The path to the CharVar R package, check .libPaths if you aren't certain, https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/libPaths
+#' @param path_to_output The path to the directory where you would like the output file written
+#' @return output file with variant characterization, named processed_chrom_chromEnd_ref_alt
 #' @examples
-#' CharacterizeVariants_single_input('file.vcf', "~/", "~/CharVar/inst/extdata/");
+#' CharacterizeVariants_single_input("/Library/Frameworks/R.framework/Versions/4.0/Resources/library/CharVar", "~/");
 #' @import
 #' @export
 CharacterizeVariants_single_input <- function(path_to_package, path_to_output) {
@@ -624,9 +624,11 @@ CharacterizeVariants_single_input <- function(path_to_package, path_to_output) {
   }
   #rezip everything
   system('gzip *.bed')
+  system('gzip *.txt')
   system('gzip *.fa')
   #write output
   setwd(path_to_output)
+  filename<-paste(chrom, chromEnd, ref, alt, sep='_')
   data.table::fwrite(compressed_variants, paste('processed_', filename, sep=''), sep = "\t", quote = FALSE, col.names = TRUE, row.names = FALSE)
   #clean workspace
   rm(list = ls())

@@ -4,7 +4,12 @@
 \alias{CharacterizeVariants}
 \title{3'UTR variant characterization}
 \usage{
-CharacterizeVariants(filename, path_to_filename, path_to_package)
+CharacterizeVariants(
+  filename,
+  path_to_filename,
+  path_to_package,
+  path_to_output
+)
 }
 \arguments{
 \item{filename}{The name of the input vcf file; must be tab delim with 8 columns:
@@ -12,12 +17,16 @@ chrom, pos, id, ref, alt, qual, filter, info. Chrom column must be either a numb
 
 \item{path_to_filename}{The path to the directory where the filename is located}
 
-\item{path_to_package}{The path to the R package
-#' @return file with variant characterization: processed_filename}
+\item{path_to_package}{The path to the CharVar R package, check .libPaths if you aren't certain, https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/libPaths}
+
+\item{path_to_output}{The path to the directory where you would like the output written}
+}
+\value{
+file with variant characterization, named processed_filename
 }
 \description{
 3'UTR variant characterization
 }
 \examples{
-CharacterizeVariants('file.vcf', "~/", "~/CharVar/inst/extdata/");
+CharacterizeVariants('file.vcf', '~/', '/Library/Frameworks/R.framework/Versions/4.0/Resources/library/CharVar', '~/');
 }

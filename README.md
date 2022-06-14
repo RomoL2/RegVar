@@ -21,7 +21,9 @@ First use install_reqs (this will install the hg38 fasta, the required conda env
 
 ``` r
 library(CharVar)
-install_reqs('"~/CharVar")
-CharacterizeVariants('file.vcf', "~/", "~/data_files/")
+install_reqs('/Library/Frameworks/R.framework/Versions/4.0/Resources/library/CharVar')
+CharacterizeVariants('file.vcf', '~/', '/Library/Frameworks/R.framework/Versions/4.0/Resources/library/CharVar', '~/')
+CharacterizeVariants_single_input("/Library/Frameworks/R.framework/Versions/4.0/Resources/library/CharVar", "~/")
+
 ```
 
