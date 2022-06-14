@@ -18,7 +18,7 @@ CharacterizeVariants_single_input <- function(path_to_output) {
   chromEnd<-as.numeric(readline(prompt="Enter variant position in 1-based coordinates: "))
   ref<-readline(prompt="Enter hg38 reference base at variant position: ")
   alt<-readline(prompt="Enter variant base: ")
-  info<-readline(prompt="Enter a name for this variant: ")
+  info<-readline(prompt="Enter a name for this variant (no spaces): ")
   vcf<-data.table::data.table(chrom, chromEnd, ref, alt, info)
   files<-list.files(path='.', pattern='*.gz')
   if (length(files)>0) {
