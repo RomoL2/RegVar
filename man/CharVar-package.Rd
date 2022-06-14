@@ -9,7 +9,7 @@
 A program to characterize 3' Untranslated Region variants by their potential regulatory elements. Takes as input canonical 3'UTR variants in a variant call file. Gives as output the variant alternatively polyadenylated isoform location; whether the variant is in an enhanced crosslinking immunoprecipitation (eCLIP) peak, microRNA site, or RNA binding protein motif; any nearby ClinVar, expressed quantitative trait loci (eQTL), or genome wide association study (GWAS) variants; and whether the variant is predicted to be an eQTL or GWAS variant.
 }
 \author{
-\strong{Maintainer}: Lindsay Romo \email{first.last@example.com} (\href{https://orcid.org/YOUR-ORCID-ID}{ORCID})
+\strong{Maintainer}: Lindsay Romo \email{lindsay.romo@childrens.harvard.edu} (\href{https://orcid.org/YOUR-ORCID-ID}{ORCID})
 
 }
 \keyword{internal}
