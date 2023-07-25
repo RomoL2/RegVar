@@ -7,8 +7,9 @@
 The goal of RegVar is to characterize 3'UTR variants into their potential regulatory elements.
 
 ## Installation
-You will need a command line to install RegVar; then it can be used in R. With a mac, use the terminal application. With a PC, you will need to download a terminal: https://learn.microsoft.com/en-us/windows/terminal/install
-First, make sure you have miniconda, pip, and bedtools installed locally (https://docs.conda.io/en/latest/miniconda.html, https://pip.pypa.io/en/stable/installation/, https://bedtools.readthedocs.io/en/latest/content/installation.html). You can then install the development version of RegVar like so:
+First: You will need a command line to install RegVar; then it can be used in R. With a mac, use the terminal application. With a PC, you will need to download a terminal: https://learn.microsoft.com/en-us/windows/terminal/install.
+
+Then: Make sure you have miniconda, pip, and bedtools installed locally (https://docs.conda.io/en/latest/miniconda.html, https://pip.pypa.io/en/stable/installation/, https://bedtools.readthedocs.io/en/latest/content/installation.html). You can then install the development version of RegVar like so in R:
 
 ``` r
 #first, install R package: 
@@ -27,7 +28,7 @@ rm -r tmp #ok to override, type "y" #remove temporary directory
 
 ## Example
 
-First use install_reqs (this will install the hg38 fasta, the required conda environment for RBPamp, and RBPamp). Then characterize variants in a standard vcf file with CharacterizeVariants or a single user-input variant with CharacterizeVariants_single_input:
+Use these functions in R to run RegVar. First use install_reqs (this will install the hg38 fasta, the required conda environment for RBPamp, and RBPamp). Then characterize variants in a standard vcf file with CharacterizeVariants or a single user-input variant with CharacterizeVariants_single_input:
 
 ``` r
 library(RegVar)
