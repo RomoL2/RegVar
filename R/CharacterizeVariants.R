@@ -98,7 +98,8 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output) {
   vcf_UTR[, ref := data.table::tstrsplit(info, '__')[[1]]]
   vcf_UTR[, alt := data.table::tstrsplit(info, '__')[[2]]]
   rm(vcf_UTR_hepg2, vcf_UTR_k562)
-  #eclip_tot column: cells_RBP
+
+  #eclip_tot column format: RBP_eCLIPcells__RBP_eCLIPcells
 
   #intersect with (nearby +/-5bp) eQTLs----
   print('incorporating eQTLS')

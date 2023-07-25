@@ -4,11 +4,9 @@
 \alias{CharacterizeVariants_single_input}
 \title{3'UTR variant characterization}
 \usage{
-CharacterizeVariants_single_input(path_to_package, path_to_output)
+CharacterizeVariants_single_input(path_to_output)
 }
 \arguments{
-\item{path_to_package}{The path to the CharVar R package, check .libPaths if you aren't certain, https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/libPaths}
-
 \item{path_to_output}{The path to the directory where you would like the output file written}
 }
 \value{
@@ -18,5 +16,5 @@ output file with variant characterization, named processed_chrom_chromEnd_ref_al
 3'UTR variant characterization
 }
 \examples{
-CharacterizeVariants_single_input("/Library/Frameworks/R.framework/Versions/4.0/Resources/library/CharVar", "~/");
+CharacterizeVariants_single_input("/Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar", "~/");
 }

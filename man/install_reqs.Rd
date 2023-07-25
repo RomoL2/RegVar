@@ -7,7 +7,7 @@
 install_reqs(path_to_package)
 }
 \arguments{
-\item{path_to_package}{The path to the CharVar R package, check .libPaths if you aren't certain, https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/libPaths}
+\item{path_to_package}{The path to the RegVar R package, check .libPaths if you aren't certain, https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/libPaths}
 }
 \value{
 conda environment- 'RBPamp'- with RBPamp installed, and hg38 fasta installed, ~400MB disc space
@@ -16,5 +16,5 @@ conda environment- 'RBPamp'- with RBPamp installed, and hg38 fasta installed, ~4
 RBPamp installation, requires miniconda
 }
 \examples{
-install_reqs('/Library/Frameworks/R.framework/Versions/4.0/Resources/library/CharVar');
+install_reqs('/Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar');
 }

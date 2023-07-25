@@ -1,9 +1,9 @@
 #' RBPamp installation, requires miniconda
 #'
-#' @param path_to_package The path to the CharVar R package, check .libPaths if you aren't certain, https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/libPaths
+#' @param path_to_package The path to the RegVar R package, check .libPaths if you aren't certain, https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/libPaths
 #' @return conda environment- 'RBPamp'- with RBPamp installed, and hg38 fasta installed, ~400MB disc space
 #' @examples
-#' install_reqs('/Library/Frameworks/R.framework/Versions/4.0/Resources/library/CharVar');
+#' install_reqs('/Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar');
 #' @import
 #' @export
 install_reqs <- function(path_to_package) {

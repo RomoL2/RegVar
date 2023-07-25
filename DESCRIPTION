@@ -1,4 +1,4 @@
-Package: CharVar
+Package: RegVar
 Title: Characterize 3' Untranslated Region Variants by Their Putative Regulatory Elements
 Version: 0.0.0.9000
 Authors@R: 
