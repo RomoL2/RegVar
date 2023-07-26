@@ -3,7 +3,7 @@
 #' @param path_to_output The path to the directory where you would like the output file written
 #' @return output file with variant characterization, named processed_chrom_chromEnd_ref_alt
 #' @examples
-#' CharacterizeVariants_single_input("/Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar", "~/");
+#' CharacterizeVariants_single_input("/Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar");
 #' @import
 #' @export
 CharacterizeVariants_single_input <- function(path_to_output) {
@@ -115,6 +115,8 @@ CharacterizeVariants_single_input <- function(path_to_output) {
     data.table::setkey(tmp, tmp_key)
     data.table::setkey(vcf_UTR, tmp_key)
     vcf_UTR<-vcf_UTR[tmp]
+  } else {
+    vcf_UTR$eqtl_info<-NA
   }
   #eqtl info column: chromStart_chromEnd_ref_alt_signalid@tissue_name= PIP[SPIP:size_of_cluster]
   # more specifically:
@@ -139,6 +141,8 @@ CharacterizeVariants_single_input <- function(path_to_output) {
     data.table::setkey(tmp, tmp_key)
     data.table::setkey(vcf_UTR, tmp_key)
     vcf_UTR<-vcf_UTR[tmp]
+  } else {
+    vcf_UTR$gwas_info<-NA
   }
   #gwas info column: chromStart, chromEnd, rsID, minor_allele, ref, alt, fine_map, pheno, maf, effect_size, pip
 
@@ -171,6 +175,8 @@ CharacterizeVariants_single_input <- function(path_to_output) {
     vcf_UTR<-miR_predictions[vcf_UTR]
     vcf_UTR[, mergekey := NULL]
     #miR_info column: miR_family__seed_match__Pct__strand__context_pile__familycons__sitecons
+  } else {
+    vcf_UTR$miR_info<-NA
   }
   rm(miR_predictions)
 
@@ -425,6 +431,8 @@ CharacterizeVariants_single_input <- function(path_to_output) {
     data.table::setkey(vcf_UTR, tmp_key)
     vcf_UTR<-vcf_UTR[tmp]
     vcf_UTR[, tmp_key := NULL]
+  } else {
+    vcf_UTR$clinvar_info<-NA
   }
   #clinvar info column:
   ##INFO=<ID=CLNDNINCL,Number=.,Type=String,Description="For included Variant : ClinVar's preferred disease name for the concept specified by disease identifiers in CLNDISDB">
@@ -609,7 +617,7 @@ CharacterizeVariants_single_input <- function(path_to_output) {
   vcf_UTR[, c('chrom', 'chromStart', 'chromEnd', 'isoStart', 'isoStop', 'gene',
               'strand', 'iso_loc', 'number_isos', 'iso_region', 'UTRstart', 'UTRstop',
               'pr_eqtl', 'pr_gwas', 'cons', 'PAS', 'PAS_1', 'stop_d', 'region',
-              'in_eclip', 'in_miR', 'ref', 'alt') := NULL]
+              'in_eclip', 'in_miR', 'ref', 'alt', 'tmp_key', 'info') := NULL]
   #collapse (currently multiple entries for same variant that are in/near more than one element)
   unique_vars<-unique(vcf_UTR$var_id)
   compressed_variants<-data.table::data.table()

@@ -33,8 +33,31 @@ Use these functions in R to run RegVar. First use install_reqs (this will instal
 ``` r
 library(RegVar)
 install_reqs('/Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar')
-CharacterizeVariants('file.vcf', '~/', '/Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar', '~/')
-CharacterizeVariants_single_input("/Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar", "~/")
+CharacterizeVariants('file.vcf', '~/', '/Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar')
+CharacterizeVariants_single_input("/Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar")
 
 ```
+For CharacterizeVariants_single_input, the arguments are the output folder
+For CharacterizeVariants, the arguments are:
+1. The name of the input vcf file; must be tab delim with 8 columns:
+chrom, pos, id, ref, alt, qual, filter, info
+Chrom column must be either a number (1) or chr# (chr1)
+2. The path to the directory where the vcf file is located
+3. The path to the directory where you would like the output written
 
+For both functions, the output columns are:
+1. phastcons_100 score
+2. phylop_100 score
+3. CADD score (for gnomAD variants only)
+4. variant ID: chr_position_ref_alt
+5. RBPamp motif RBPs, separated by underscore
+6. category of RBPamp motifs (based on whether variant is predicted to disrupt or preserve the motif)
+7. variant microRNA info: miR name, seed type, Pct, strand, context percentile, family conservation, site conservation, separated by two underscores (not all info is available for all variants, listed as NULL if not)
+8. variant eclip peaks in the following format: RBP_cell separated by two underscores 
+9. variant eQTL info, if applicable (within 5NT): chromStart_chromEnd_ref_alt_signalid@tissue_name= PIP[SPIP:size_of_cluster]
+10. variant GWAS info, if applicable (within 5NT), separated by underscore: chromStart, chromEnd, rsID, minor_allele, ref, alt, fine_map, pheno, maf, effect_size, pip
+11. variant ClinVar info, if applicable (within 5NT); see ClinVar documentation for column description
+12. whether the variant is predicted to be an eQTL (1 or 0 corresponds to yes or no)
+13. whether the variant is predited to be a GWAS variant (1 or 0 corresponds to yes or no)
+14. APA info: ensemble gene, strand, APA isoform number the variant falls in, total APA isoforms, and what region the variant falls in (common, single, partially-shared, or unique) separated by underscore
+15. poly A site info (is NA if not within 50NT of a poly A site)

@@ -6,11 +6,11 @@
 #' @param path_to_output The path to the directory where you would like the output written
 #' @return file with variant characterization, named processed_filename
 #' @examples
-#' CharacterizeVariants('file.vcf', '~/', '/Library/Frameworks/R.framework/Versions/4.0/Resources/library/CharVar', '~/');
+#' CharacterizeVariants('file.vcf', '~/', '/Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar');
 #' @import
 #' @export
 CharacterizeVariants <- function(filename, path_to_filename, path_to_output) {
-  path_to_package<-paste(.libPaths(), '/CharVar', sep='')
+  path_to_package<-paste(.libPaths(), '/RegVar', sep='')
   #import and format vcf file (format of columns: chrom, chromEnd, name, ref, alt, info)----
   options(scipen = 999)
   setwd(path_to_package)
@@ -117,6 +117,8 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output) {
     data.table::setkey(tmp, tmp_key)
     data.table::setkey(vcf_UTR, tmp_key)
     vcf_UTR<-vcf_UTR[tmp]
+  } else {
+    vcf_UTR$eqtl_info<-NA
   }
 
   #eqtl info column: chromStart_chromEnd_ref_alt_signalid@tissue_name= PIP[SPIP:size_of_cluster]
@@ -142,6 +144,8 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output) {
     data.table::setkey(tmp, tmp_key)
     data.table::setkey(vcf_UTR, tmp_key)
     vcf_UTR<-vcf_UTR[tmp]
+  } else {
+    vcf_UTR$gwas_info<-NA
   }
   #gwas info column: chromStart, chromEnd, rsID, minor_allele, ref, alt, fine_map, pheno, maf, effect_size, pip
 
@@ -174,6 +178,8 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output) {
     vcf_UTR<-miR_predictions[vcf_UTR]
     vcf_UTR[, mergekey := NULL]
     #miR_info column: miR_family__seed_match__Pct__strand__context_pile__familycons__sitecons
+  } else {
+    miR_info<-NA
   }
   rm(miR_predictions)
 
@@ -427,7 +433,9 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output) {
     data.table::setkey(vcf_UTR, tmp_key)
     vcf_UTR<-vcf_UTR[tmp]
     vcf_UTR[, tmp_key := NULL]
-  }  #clinvar info column:
+  } else {
+    vcf_UTR$cinvar_info<-NA
+  } #clinvar info column:
   ##INFO=<ID=CLNDNINCL,Number=.,Type=String,Description="For included Variant : ClinVar's preferred disease name for the concept specified by disease identifiers in CLNDISDB">
   ##INFO=<ID=CLNDISDB,Number=.,Type=String,Description="Tag-value pairs of disease database name and identifier, e.g. OMIM:NNNNNN">
   ##INFO=<ID=CLNDISDBINCL,Number=.,Type=String,Description="For included Variant: Tag-value pairs of disease database name and identifier, e.g. OMIM:NNNNNN">
