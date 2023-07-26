@@ -4,7 +4,7 @@
 <!-- badges: start -->
 <!-- badges: end -->
 
-The goal of RegVar is to characterize 3'UTR variants into their potential regulatory elements.
+The goal of RegVar is to characterize 3'UTR single nucleotide variants into their potential regulatory elements.
 
 ## Installation
 First: You will need a command line to install RegVar; then it can be used in R. With a mac, use the terminal application. With a PC, you will need to download a terminal: https://learn.microsoft.com/en-us/windows/terminal/install.
