@@ -376,20 +376,24 @@ CharacterizeVariants_single_input <- function(path_to_output) {
   variants[aff_ref > strong_prop & (aff_alt / aff_ref) > pres_prop, cat := "preserved"]
 
   ##collapse variants in more than one RBP motif----
-  variants<-variants[!is.na(cat)] #only keep variants in strong motifs
   variants[, base_id:=paste(chrom, chromStart, chromEnd, strand, sep='_')]
   variants[, var_id:=paste(base_id, ref, alt, sep='_')]
-  unique_vars<-unique(variants$var_id)
-  compressed_variants<-data.table::data.table()
-  variants<-unique(variants[, c('var_id', 'RBP', 'cat')])
-  for (n in 1:length(unique_vars)) {
-    matches<-variants[var_id==unique_vars[n],]
-    if (nrow(matches)>0) {
-      RBPs<-paste(matches$RBP, collapse = "_")
-      cat<-paste(matches$cat, collapse='__')
-      row<-cbind(matches$var_id[1], RBPs, cat)
-      compressed_variants<-rbind(compressed_variants, row)
+  if (nrow(variants[!is.na(cat)])>0) {
+    variants<-variants[!is.na(cat)] #only keep variants in strong motifs
+    unique_vars<-unique(variants$var_id)
+    compressed_variants<-data.table::data.table()
+    variants<-unique(variants[, c('var_id', 'RBP', 'cat')])
+    for (n in 1:length(unique_vars)) {
+      matches<-variants[var_id==unique_vars[n],]
+      if (nrow(matches)>0) {
+        RBPs<-paste(matches$RBP, collapse = "_")
+        cat<-paste(matches$cat, collapse='__')
+        row<-cbind(matches$var_id[1], RBPs, cat)
+        compressed_variants<-rbind(compressed_variants, row)
+      }
     }
+  } else {
+    compressed_variants<-data.table::data.table(unique(variants$var_id), 'NA', 'NA')
   }
   names(compressed_variants)<-c('var_id', 'motif_RBPs', 'motif_cat')
 
