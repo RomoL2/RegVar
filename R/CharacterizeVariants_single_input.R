@@ -173,8 +173,9 @@ CharacterizeVariants_single_input <- function(path_to_output) {
     data.table::setkey(miR_predictions, mergekey)
     data.table::setkey(vcf_UTR, mergekey)
     vcf_UTR<-miR_predictions[vcf_UTR]
+    vcf_UTR[, miR_info := paste(mergekey, miR_info, sep='__')]
     vcf_UTR[, mergekey := NULL]
-    #miR_info column: miR_family__seed_match__Pct__strand__context_pile__familycons__sitecons
+    #miR_info column: gene_miR_family_miR_family__seed_match__Pct__strand__context_pile__familycons__sitecons
   } else {
     vcf_UTR$miR_info<-NA
   }
