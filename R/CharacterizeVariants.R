@@ -636,17 +636,15 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output) {
     row<-cbind(matches, miR_info, gwas_info, clinvar_info)
     compressed_variants<-rbind(compressed_variants, row)
   }
+  #rezip everything
+  print('compressing files; this may take a bit')
+  system('gzip *.bed')
+  system('gzip *.fa')
+  system('gzip *.txt')
   #write output
   print('writing output')
   setwd(path_to_output)
   data.table::fwrite(compressed_variants, paste('processed_', filename, sep=''), sep = "\t", quote = FALSE, col.names = TRUE, row.names = FALSE)
-  #rezip everything
-  print('compressing files; this may take a bit')
-  setwd(path_to_package)
-  setwd('./extdata')
-  system('gzip *.bed')
-  system('gzip *.fa')
-  system('gzip *.txt')
   #clean workspace
   rm(list = ls())
 }
