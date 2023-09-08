@@ -642,6 +642,8 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output) {
   data.table::fwrite(compressed_variants, paste('processed_', filename, sep=''), sep = "\t", quote = FALSE, col.names = TRUE, row.names = FALSE)
   #rezip everything
   print('compressing files; this may take a bit')
+  setwd(path_to_package)
+  setwd('./extdata')
   system('gzip *.bed')
   system('gzip *.fa')
   system('gzip *.txt')
