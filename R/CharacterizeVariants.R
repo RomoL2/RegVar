@@ -167,18 +167,22 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output) {
     #merge with rest of miR info using mergekey
     miR_predictions<-data.table::fread('hg38_miR_predictions_final.txt')
     #miR predictions only has conserved families to save disc space; remove non-conserved from vcf here
-    vcf_UTR<-vcf_UTR[mergekey %in% miR_predictions$mergekey,]
-    miR_predictions[, cons := substr(cons, 1, nchar(cons)-4)]
-    miR_predictions[, i.cons := substr(i.cons, 1, nchar(i.cons)-4)]
-    miR_predictions[, i.cons := data.table::tstrsplit(i.cons, '_')[[2]]]
-    miR_predictions[, miR_info := paste(miR_family, seed_match, Pct, strand, context_pile, cons, i.cons, sep='__')]
-    miR_predictions<-miR_predictions[, .(mergekey, miR_info)]
-    data.table::setkey(miR_predictions, mergekey)
-    data.table::setkey(vcf_UTR, mergekey)
-    vcf_UTR<-miR_predictions[vcf_UTR]
-    vcf_UTR[, miR_info := paste(mergekey, miR_info, sep='__')]
-    vcf_UTR[, mergekey := NULL]
-    #miR_info column: gene_miR_family_miR_family__seed_match__Pct__strand__context_pile__familycons__sitecons
+    vcf_UTR_tmp<-vcf_UTR[mergekey %in% miR_predictions$mergekey,]
+    if (nrow(vcf_UTR_tmp)>0) {
+      miR_predictions[, cons := substr(cons, 1, nchar(cons)-4)]
+      miR_predictions[, i.cons := substr(i.cons, 1, nchar(i.cons)-4)]
+      miR_predictions[, i.cons := data.table::tstrsplit(i.cons, '_')[[2]]]
+      miR_predictions[, miR_info := paste(miR_family, seed_match, Pct, strand, context_pile, cons, i.cons, sep='__')]
+      miR_predictions<-miR_predictions[, .(mergekey, miR_info)]
+      data.table::setkey(miR_predictions, mergekey)
+      data.table::setkey(vcf_UTR, mergekey)
+      vcf_UTR<-miR_predictions[vcf_UTR]
+      vcf_UTR[, miR_info := paste(mergekey, miR_info, sep='__')]
+      vcf_UTR[, mergekey := NULL]
+      #miR_info column: gene_miR_family_miR_family__seed_match__Pct__strand__context_pile__familycons__sitecons
+    } else {
+      vcf_UTR[, miR_info := paste(mergekey, 'nonCons_family', sep='__')]
+      }
   } else {
     miR_info<-NA
   }
