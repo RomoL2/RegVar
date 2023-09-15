@@ -7,6 +7,8 @@
 The goal of RegVar is to characterize 3'UTR single nucleotide variants by their potential regulatory elements.
 
 ## Installation
+RegVar can be installed on a local computer, or on a computing cluster. Make sure you have updated base R as well as installed devtools to install RegVar.
+
 First: You will need a command line to install RegVar; then it can be used in R. With a mac, use the terminal application. With a PC, you will need to download a terminal: https://learn.microsoft.com/en-us/windows/terminal/install.
 
 Then: Make sure you have miniconda, pip, and bedtools installed locally (https://docs.conda.io/en/latest/miniconda.html, https://pip.pypa.io/en/stable/installation/, https://bedtools.readthedocs.io/en/latest/content/installation.html). You can then install the development version of RegVar like so in R:
@@ -28,13 +30,16 @@ rm -r tmp #ok to override, type "y" #remove temporary directory
 
 ## Example
 
-Use these functions in R to run RegVar. First use install_reqs (this will install the hg38 fasta, the required conda environment for RBPamp, and RBPamp). Then characterize variants in a standard vcf file with CharacterizeVariants or a single user-input variant with CharacterizeVariants_single_input:
+Use these functions in R to run RegVar. First use install_reqs (this will install the hg38 fasta, the required conda environment for RBPamp, and RBPamp). The argument must be the location of the R package either on your local computer or on the cluster (for instance, if in a conda environment, '~/.conda/envs/myR/lib/R/library/RegVar'). 
+Of note, install_reqs will install the g-zipped hg38 fasta, which is a large file (almost 1 GB zipped)
+
+Then characterize variants in a standard vcf file with CharacterizeVariants or a single user-input variant with CharacterizeVariants_single_input:
 
 ``` r
 library(RegVar)
 install_reqs('/Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar')
-CharacterizeVariants('file.vcf', '~/', '/Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar')
-CharacterizeVariants_single_input("/Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar")
+CharacterizeVariants('file.vcf', '~/', '~/')
+CharacterizeVariants_single_input('~/')
 
 ```
 For CharacterizeVariants_single_input, the arguments are the output folder
