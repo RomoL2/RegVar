@@ -431,10 +431,19 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output) {
   print('incorporating ClinVar')
   vcf_UTR[, tmp_key := seq(1:nrow(vcf_UTR))]
   data.table::fwrite(vcf_UTR[, c('chrom', 'chromStart', 'chromEnd', 'tmp_key')], 'vcf_UTR_tmp.bed', col.names=FALSE, row.names=FALSE, quote=FALSE, sep='\t')
-  system('bedtools intersect -a vcf_UTR_tmp.bed -b clinvar_for_script.bed -wa -wb > vcf_UTR_clinvar.bed')
+  system('bedtools intersect -a vcf_UTR_tmp.bed -b clinvar_info.bed -wa -wb > vcf_UTR_clinvar.bed')
   suppressWarnings(tmp<-data.table::fread('vcf_UTR_clinvar.bed'))
+  #intersect to clinvar info
+  cv_info<-data.table::fread('clinvar_for_script.bed')
+  cv_info[, cv_key := seq(1:nrow(cv_info))]
+  cv_info<-cv_info[, 4:5]
+  names(cv_info)<-c('clinvar_info', 'cv_key')
   if (nrow(tmp)>0) {
-    names(tmp)<-c('chrom', 'chromStart', 'chromEnd', 'tmp_key', 'chr2', 'window_start', 'window_stop', 'clinvar_info')
+    names(tmp)<-c('chrom', 'chromStart', 'chromEnd', 'tmp_key', 'chr2', 'window_start', 'window_stop', 'cv_key')
+    data.table::setkey(tmp, cv_key)
+    data.table::setkey(cv_info, cv_key)
+    tmp<-cv_info[tmp]
+    tmp[, 'cv_key']<-NULL
     tmp<-unique(tmp[, .(tmp_key, clinvar_info)])
 
     #add to vcf file
@@ -443,8 +452,9 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output) {
     vcf_UTR<-vcf_UTR[tmp]
     vcf_UTR[, tmp_key := NULL]
   } else {
-    vcf_UTR$cinvar_info<-NA
-  } #clinvar info column:
+    vcf_UTR$clinvar_info<-NA
+  }
+  #clinvar info column:
   ##INFO=<ID=CLNDNINCL,Number=.,Type=String,Description="For included Variant : ClinVar's preferred disease name for the concept specified by disease identifiers in CLNDISDB">
   ##INFO=<ID=CLNDISDB,Number=.,Type=String,Description="Tag-value pairs of disease database name and identifier, e.g. OMIM:NNNNNN">
   ##INFO=<ID=CLNDISDBINCL,Number=.,Type=String,Description="For included Variant: Tag-value pairs of disease database name and identifier, e.g. OMIM:NNNNNN">
