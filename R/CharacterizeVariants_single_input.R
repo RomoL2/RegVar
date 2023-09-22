@@ -633,10 +633,10 @@ CharacterizeVariants_single_input <- function(path_to_output) {
   vcf_UTR[, var_id := paste(chrom, chromEnd, ref, alt, sep='_')]
   vcf_UTR[, APA_info := paste(gene, strand, iso_loc, number_isos, iso_region, sep='_')]
   vcf_UTR[, PAS_info := ifelse(PAS_1<51, 'PAS_proximal', '')]
-  vcf_UTR[, c('chrom', 'chromStart', 'chromEnd', 'isoStart', 'isoStop', 'gene',
+  suppressWarnings(vcf_UTR[, c('chrom', 'chromStart', 'chromEnd', 'isoStart', 'isoStop', 'gene',
               'strand', 'iso_loc', 'number_isos', 'iso_region', 'UTRstart', 'UTRstop',
               'pr_eqtl', 'pr_gwas', 'cons', 'PAS', 'PAS_1', 'stop_d', 'region',
-              'in_eclip', 'in_miR', 'ref', 'alt', 'tmp_key', 'info') := NULL]
+              'in_eclip', 'in_miR', 'ref', 'alt', 'tmp_key', 'info') := NULL])
   #collapse (currently multiple entries for same variant that are in/near more than one element)
   unique_vars<-unique(vcf_UTR$var_id)
   compressed_variants<-data.table::data.table()

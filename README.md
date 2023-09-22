@@ -28,16 +28,31 @@ mv tmp/inst/extdata ./ #replace with directory with real annotation files
 rm -r tmp #ok to override, type "y" #remove temporary directory
 ```
 
+Then, again in the RBPamp diretory of RegVar in command line create the conda environment for RBPamp (this solve may take quite a while, up to a few hours):
+(source for RBPamp is: https://bitbucket.org/marjens/rbpamp/src/master/)
+Note that RBPamp is the only part of the script that needs to run in a conda environment; bedtools should be installed outside of the environment (base).
+``` r
+cd /Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar/extdata/RBPamp
+conda create --name RBPamp --file requirements.txt -c conda-forge
+conda activate RBPamp #need to be in the same directory as above
+export CC=gcc
+python setup.py build #there will be a lot of warnings in the window; don't worry unless build fails
+python setup.py install
+```
+
+Then, again in the RBPamp diretory of RegVar, download the hg38 fasta (large file, zipped is ~1GB)
+``` r
+cd /Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar/extdata
+wget https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.fa.gz
+```
+
 ## Example
 
-Use these functions in R to run RegVar. First use install_reqs (this will install the hg38 fasta, the required conda environment for RBPamp, and RBPamp). The argument must be the location of the R package either on your local computer or on the cluster (for instance, if in a conda environment, '~/.conda/envs/myR/lib/R/library/RegVar'). 
-Of note, install_reqs will install the g-zipped hg38 fasta, which is a large file (almost 1 GB zipped)
-
-Then characterize variants in a standard vcf file with CharacterizeVariants or a single user-input variant with CharacterizeVariants_single_input:
+Use these functions in R to run RegVar. 
+Characterize 3'UTR variants in a standard vcf file with CharacterizeVariants, or a single user-input variant with CharacterizeVariants_single_input:
 
 ``` r
 library(RegVar)
-install_reqs('/Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar')
 CharacterizeVariants('file.vcf', '~/', '~/')
 CharacterizeVariants_single_input('~/')
 
@@ -65,4 +80,4 @@ For both functions, the output columns are:
 12. whether the variant is predicted to be an eQTL (1 or 0 corresponds to yes or no)
 13. whether the variant is predited to be a GWAS variant (1 or 0 corresponds to yes or no)
 14. APA info: ensemble gene, strand, APA isoform number the variant falls in, total APA isoforms, and what region the variant falls in (common, single, partially-shared, or unique) separated by underscore
-15. poly A site info (is NA if not within 50NT of a poly A site)
+15. poly A site info (is empty if not within 50NT of a poly A site)
