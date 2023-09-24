@@ -16,5 +16,5 @@ output file with variant characterization, named processed_chrom_chromEnd_ref_al
 3'UTR variant characterization
 }
 \examples{
-CharacterizeVariants_single_input("/Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar", "~/");
+CharacterizeVariants_single_input("/Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar");
 }
