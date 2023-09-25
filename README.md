@@ -11,7 +11,7 @@ RegVar can be installed on a local computer, or on a computing cluster. Make sur
 
 First: You will need a command line to install RegVar; then it can be used in R. With a mac, use the terminal application. With a PC, you will need to download a terminal: https://learn.microsoft.com/en-us/windows/terminal/install.
 
-Then: Make sure you have miniconda, pip, and bedtools installed locally (https://docs.conda.io/en/latest/miniconda.html, https://pip.pypa.io/en/stable/installation/, https://bedtools.readthedocs.io/en/latest/content/installation.html). You can then install the development version of RegVar like so in R:
+Then: Make sure you have miniconda, pip, gcc, and bedtools installed locally (https://docs.conda.io/en/latest/miniconda.html, https://pip.pypa.io/en/stable/installation/, https://www.geeksforgeeks.org/how-to-install-gcc-compiler-on-linux/#, https://bedtools.readthedocs.io/en/latest/content/installation.html). You can then install the development version of RegVar like so in R:
 
 ``` r
 #first, install R package: 
