@@ -268,7 +268,7 @@ CharacterizeVariants_single_input <- function(path_to_output) {
 
   # read back in
   variants <- data.table::fread("nat_sorted_vcf_UTR_tmp_intersected_expanded_RNA_strand_PLUS_k_for_seq2.txt", header = FALSE)
-  if (nrow(variants)==0) stop('no hg38, did you forget to run install_reqs first?')
+  if (nrow(variants)==0) stop('no hg38, did you forget to install first?')
   names(variants) <- c(names_BED_std, "seq")
   variants[, c("chromStart", "chromEnd") := NULL]
 
