@@ -440,7 +440,13 @@ CharacterizeVariants_single_input <- function(path_to_output) {
     data.table::setkey(tmp, tmp_key)
     data.table::setkey(vcf_UTR, tmp_key)
     vcf_UTR<-vcf_UTR[tmp]
+    #combine info for same tmp key
+    for (n in 1:length(unique(tmp$tmp_key))){
+      matches<-tmp[tmp_key==tmp$tmp_key[n],]
+      vcf_UTR[tmp_key==tmp$tmp_key[n], info := paste(matches$info, collapse='|')]
+    }
     vcf_UTR[, tmp_key := NULL]
+    vcf_UTR<-unique(vcf_UTR)
   } else {
     vcf_UTR$clinvar_info<-NA
   }
