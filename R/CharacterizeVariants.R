@@ -429,24 +429,16 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output) {
 
   #nearby (+/-5bp) ClinVar----
   print('incorporating ClinVar')
+  print('incorporating ClinVar')
   vcf_UTR[, tmp_key := seq(1:nrow(vcf_UTR))]
   data.table::fwrite(vcf_UTR[, c('chrom', 'chromStart', 'chromEnd', 'tmp_key')], 'vcf_UTR_tmp.bed', col.names=FALSE, row.names=FALSE, quote=FALSE, sep='\t')
-  system('bedtools intersect -a vcf_UTR_tmp.bed -b clinvar_info.bed -wa -wb > vcf_UTR_clinvar.bed')
-  suppressWarnings(tmp<-data.table::fread('vcf_UTR_clinvar.bed'))
-  #intersect to clinvar info
-  cv_info<-data.table::fread('clinvar_for_script.bed')
-  cv_info[, cv_key := seq(1:nrow(cv_info))]
-  cv_info<-cv_info[, 4:5]
-  names(cv_info)<-c('clinvar_info', 'cv_key')
+  system('bedtools intersect -a vcf_UTR_tmp.bed -b clinvar_for_script.bed -wa -wb > vcf_UTR_clinvar.bed')
+  suppressWarnings(tmp<-data.table::fread('vcf_UTR_clinvar.bed', header=F, sep='\t'))
+  #add clinvar info
   if (nrow(tmp)>0) {
-    names(tmp)<-c('chrom', 'chromStart', 'chromEnd', 'tmp_key', 'chr2', 'window_start', 'window_stop', 'cv_key')
-    data.table::setkey(tmp, cv_key)
-    data.table::setkey(cv_info, cv_key)
-    tmp<-cv_info[tmp]
-    tmp[, 'cv_key']<-NULL
-    tmp<-unique(tmp[, .(tmp_key, clinvar_info)])
-
+    names(tmp)<-c('chrom', 'chromStart', 'chromEnd', 'tmp_key', 'chr2', 'window_start', 'window_stop', 'info')
     #add to vcf file
+    tmp<-tmp[, c('tmp_key', 'info')]
     data.table::setkey(tmp, tmp_key)
     data.table::setkey(vcf_UTR, tmp_key)
     vcf_UTR<-vcf_UTR[tmp]
