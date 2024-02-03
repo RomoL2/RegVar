@@ -22,9 +22,8 @@ Then, in the RegVar directory in command line install the necessary annotation f
 ``` r
 cd /Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar
 rm -r extdata #remove directory with symbolic links
-wget https://zenodo.org/record/8377025/files/extdata.tar.gz 
+wget https://zenodo.org/record/10612152/files/extdata.tar.gz 
 tar -xf extdata.tar.gz #unzip files, makes directory
-mv requirements.txt ./extdata/RBPamp
 ```
 
 Then, again in the RBPamp directory of RegVar in command line create the conda environment for RBPamp (this solve may take quite a while, up to a few hours):
