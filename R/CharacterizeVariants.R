@@ -17,7 +17,7 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output) {
   project_dir<-list.files(pattern = "fai$", recursive = TRUE)[1]
   project_dir<-stringr::str_extract(project_dir[1], '.*extdata.')
   setwd(project_dir)
-  vcf<-data.table::fread(paste(path_to_filename, filename, sep='/'))
+  #vcf<-data.table::fread(paste(path_to_filename, filename, sep='/'))
   files<-list.files(path='.', pattern='*.gz')
   if (length(files)>0) {
     system('gunzip *.gz')
@@ -445,7 +445,7 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output) {
     #combine info for same tmp key
     for (n in 1:length(unique(tmp$tmp_key))){
       matches<-tmp[tmp_key==tmp$tmp_key[n],]
-      vcf_UTR[tmp_key==tmp$tmp_key[n], info := paste(matches$info, collapse='|')]
+      vcf_UTR[tmp_key==tmp$tmp_key[n], clinvar_info := paste(matches$info, collapse='|')]
     }
     vcf_UTR[, tmp_key := NULL]
     vcf_UTR<-unique(vcf_UTR)
@@ -632,10 +632,9 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output) {
   vcf_UTR[, var_id := paste(chrom, chromEnd, ref, alt, sep='_')]
   vcf_UTR[, APA_info := paste(gene, strand, iso_loc, number_isos, iso_region, sep='_')]
   vcf_UTR[, PAS_info := ifelse(PAS_1<51, 'PAS_proximal', '')]
-  vcf_UTR[, c('chrom', 'chromStart', 'chromEnd', 'isoStart', 'isoStop', 'gene',
-              'strand', 'iso_loc', 'number_isos', 'iso_region', 'UTRstart', 'UTRstop',
-              'pr_eqtl', 'pr_gwas', 'cons', 'PAS', 'PAS_1', 'stop_d', 'region',
-              'in_eclip', 'in_miR', 'ref', 'alt', 'tmp_key') := NULL]
+  vcf_UTR<-vcf_UTR[, .(phastcons_100, phylop_100, cadd_var_info, var_id, motif_RBPs,
+                       motif_cat, miR_info, eclip_tot, eqtl_info, gwas_info, clinvar_info,
+                       pred_eqtl, pred_gwas, APA_info, PAS_info)]
   #collapse (currently multiple entries for same variant that are in/near more than one element)
   unique_vars<-unique(vcf_UTR$var_id)
   compressed_variants<-data.table::data.table()
@@ -649,15 +648,16 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output) {
     row<-cbind(matches, miR_info, gwas_info, clinvar_info)
     compressed_variants<-rbind(compressed_variants, row)
   }
+  #write output
+  compressed_variants<-unique(compressed_variants)
+  print('writing output')
+  setwd(path_to_output)
+  data.table::fwrite(compressed_variants, paste('processed_', filename, sep=''), sep = "\t", quote = FALSE, col.names = TRUE, row.names = FALSE)
   #rezip everything
   print('compressing files; this may take a bit')
   system('gzip *.bed')
   system('gzip *.fa')
   system('gzip *.txt')
-  #write output
-  print('writing output')
-  setwd(path_to_output)
-  data.table::fwrite(compressed_variants, paste('processed_', filename, sep=''), sep = "\t", quote = FALSE, col.names = TRUE, row.names = FALSE)
   #clean workspace
   rm(list = ls())
 }

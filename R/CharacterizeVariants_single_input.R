@@ -319,7 +319,7 @@ CharacterizeVariants_single_input <- function(path_to_output) {
   rm(temp_seq)
 
   ##fetch affinities----
-  path_to_python<-reticulate::conda_list()[[2]][which(reticulate::conda_list()[[1]]=='RBPamp')]
+  reticulate::source_python("RBPamp_aff_local.py")
   reticulate::use_python(path_to_python, required = TRUE)
   reticulate::use_condaenv('RBPamp', required=TRUE)
   reticulate::source_python("RBPamp_aff_local.py") #need RBP motif files in ./motifs2
@@ -443,7 +443,7 @@ CharacterizeVariants_single_input <- function(path_to_output) {
     #combine info for same tmp key
     for (n in 1:length(unique(tmp$tmp_key))){
       matches<-tmp[tmp_key==tmp$tmp_key[n],]
-      vcf_UTR[tmp_key==tmp$tmp_key[n], info := paste(matches$info, collapse='|')]
+      vcf_UTR[tmp_key==tmp$tmp_key[n], clinvar_info := paste(matches$info, collapse='|')]
     }
     vcf_UTR[, tmp_key := NULL]
     vcf_UTR<-unique(vcf_UTR)
@@ -630,10 +630,9 @@ CharacterizeVariants_single_input <- function(path_to_output) {
   vcf_UTR[, var_id := paste(chrom, chromEnd, ref, alt, sep='_')]
   vcf_UTR[, APA_info := paste(gene, strand, iso_loc, number_isos, iso_region, sep='_')]
   vcf_UTR[, PAS_info := ifelse(PAS_1<51, 'PAS_proximal', '')]
-  suppressWarnings(vcf_UTR[, c('chrom', 'chromStart', 'chromEnd', 'isoStart', 'isoStop', 'gene',
-              'strand', 'iso_loc', 'number_isos', 'iso_region', 'UTRstart', 'UTRstop',
-              'pr_eqtl', 'pr_gwas', 'cons', 'PAS', 'PAS_1', 'stop_d', 'region',
-              'in_eclip', 'in_miR', 'ref', 'alt', 'tmp_key', 'info') := NULL])
+  vcf_UTR<-vcf_UTR[, .(phastcons_100, phylop_100, cadd_var_info, var_id, motif_RBPs,
+                       motif_cat, miR_info, eclip_tot, eqtl_info, gwas_info, clinvar_info,
+                       pred_eqtl, pred_gwas, APA_info, PAS_info)]
   #collapse (currently multiple entries for same variant that are in/near more than one element)
   unique_vars<-unique(vcf_UTR$var_id)
   compressed_variants<-data.table::data.table()
