@@ -635,7 +635,7 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output) {
   vcf_UTR[, c('chrom', 'chromStart', 'chromEnd', 'isoStart', 'isoStop', 'gene',
               'strand', 'iso_loc', 'number_isos', 'iso_region', 'UTRstart', 'UTRstop',
               'pr_eqtl', 'pr_gwas', 'cons', 'PAS', 'PAS_1', 'stop_d', 'region',
-              'in_eclip', 'in_miR', 'ref', 'alt') := NULL]
+              'in_eclip', 'in_miR', 'ref', 'alt', 'tmp_key') := NULL]
   #collapse (currently multiple entries for same variant that are in/near more than one element)
   unique_vars<-unique(vcf_UTR$var_id)
   compressed_variants<-data.table::data.table()
