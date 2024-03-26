@@ -17,7 +17,8 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output) {
   project_dir<-list.files(pattern = "fai$", recursive = TRUE)[1]
   project_dir<-stringr::str_extract(project_dir[1], '.*extdata.')
   setwd(project_dir)
-  #vcf<-data.table::fread(paste(path_to_filename, filename, sep='/'))
+  vcf<-data.table::fread(paste(path_to_filename, filename, sep='/'))
+  #vcf<-data.table::fread(paste('~/Dropbox (MIT)/bioinformatics', 'mini_problems.txt', sep='/'))
   files<-list.files(path='.', pattern='*.gz')
   if (length(files)>0) {
     system('gunzip *.gz')
@@ -155,6 +156,7 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output) {
   data.table::fwrite(vcf_UTR[, c('chrom', 'chromStart', 'chromEnd', 'tmp_key')], 'vcf_UTR_tmp.bed', col.names=FALSE, row.names=FALSE, quote=FALSE, sep='\t')
   system('bedtools intersect -a vcf_UTR_tmp.bed -b hg38_miR_predictions_final.bed -wa -wb > vcf_UTR_miRs.bed')
   suppressWarnings(tmp<-data.table::fread('vcf_UTR_miRs.bed'))
+  #add info to df
   if (nrow(tmp)>0) {
     names(tmp)<-c('chrom', 'chromStart', 'chromEnd', 'tmp_key', 'chr2', 'miRstart', 'miRstop', 'mergekey')
     tmp<-unique(tmp[, .(tmp_key, mergekey)])
@@ -162,7 +164,7 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output) {
     #add miR mergekey (unique key to match miR bed locations to full miR info file) to vcf file
     data.table::setkey(tmp, tmp_key)
     data.table::setkey(vcf_UTR, tmp_key)
-    vcf_UTR<-vcf_UTR[tmp]
+    vcf_UTR<-tmp[vcf_UTR]
 
     #merge with rest of miR info using mergekey
     miR_predictions<-data.table::fread('hg38_miR_predictions_final.txt')
@@ -181,10 +183,10 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output) {
       vcf_UTR[, mergekey := NULL]
       #miR_info column: gene_miR_family_miR_family__seed_match__Pct__strand__context_pile__familycons__sitecons
     } else {
-      vcf_UTR[, miR_info := paste(mergekey, 'nonCons_family', sep='__')]
+      vcf_UTR[!is.na(mergekey), miR_info := paste(mergekey, 'nonCons_family', sep='__')]
       }
   } else {
-    miR_info<-NA
+    vcf_UTR[, miR_info<-NA]
   }
   rm(miR_predictions)
 
@@ -439,13 +441,14 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output) {
     names(tmp)<-c('chrom', 'chromStart', 'chromEnd', 'tmp_key', 'chr2', 'window_start', 'window_stop', 'info')
     #add to vcf file
     tmp<-tmp[, c('tmp_key', 'info')]
+    names(tmp)<-c('tmp_key', 'clinvar_info')
     data.table::setkey(tmp, tmp_key)
     data.table::setkey(vcf_UTR, tmp_key)
-    vcf_UTR<-vcf_UTR[tmp]
+    vcf_UTR<-tmp[vcf_UTR]
     #combine info for same tmp key
     for (n in 1:length(unique(tmp$tmp_key))){
       matches<-tmp[tmp_key==tmp$tmp_key[n],]
-      vcf_UTR[tmp_key==tmp$tmp_key[n], clinvar_info := paste(matches$info, collapse='|')]
+      vcf_UTR[tmp_key==tmp$tmp_key[n], clinvar_info := paste(matches$clinvar_info, collapse='|')]
     }
     vcf_UTR[, tmp_key := NULL]
     vcf_UTR<-unique(vcf_UTR)
