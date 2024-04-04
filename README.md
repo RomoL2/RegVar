@@ -33,7 +33,7 @@ Note that RBPamp is the only part of the script that needs to run in a conda env
 cd /Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar/extdata/RBPamp
 conda create --name RBPamp --file requirements.txt -c conda-forge
 conda activate RBPamp #need to be in the same directory as above
-export CC=gcc #if you are getting an error here, it is likely because you don't have gcc installed; see above
+export GCC=gcc #if you are getting an error here, it is likely because you don't have gcc installed; see above
 python setup.py build #there will be a lot of warnings in the window; don't worry unless build fails
 python setup.py install
 ```
