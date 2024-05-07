@@ -320,6 +320,7 @@ CharacterizeVariants_single_input <- function(path_to_output) {
 
   ##fetch affinities----
   reticulate::source_python("RBPamp_aff_local.py")
+  path_to_python<-reticulate::conda_list()[[2]][which(reticulate::conda_list()[[1]]=='RBPamp')]
   reticulate::use_python(path_to_python, required = TRUE)
   reticulate::use_condaenv('RBPamp', required=TRUE)
   reticulate::source_python("RBPamp_aff_local.py") #need RBP motif files in ./motifs2
