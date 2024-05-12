@@ -117,7 +117,7 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output) {
     #add to vcf file
     data.table::setkey(tmp, tmp_key)
     data.table::setkey(vcf_UTR, tmp_key)
-    vcf_UTR<-vcf_UTR[tmp]
+    vcf_UTR<-tmp[vcf_UTR]
   } else {
     vcf_UTR$eqtl_info<-NA
   }
@@ -144,7 +144,7 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output) {
     #add to vcf file
     data.table::setkey(tmp, tmp_key)
     data.table::setkey(vcf_UTR, tmp_key)
-    vcf_UTR<-vcf_UTR[tmp]
+    vcf_UTR<-tmp[vcf_UTR]
   } else {
     vcf_UTR$gwas_info<-NA
   }
