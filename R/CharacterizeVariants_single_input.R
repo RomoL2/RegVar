@@ -647,13 +647,13 @@ CharacterizeVariants_single_input <- function(path_to_output) {
     compressed_variants<-rbind(compressed_variants, row)
   }
   #rezip everything if desired
-  zip_or_no<-readline(prompt="Wouly you like to compress required files? May take a while (Y/N):")
-  if zip_or_no=='Y' {
+  zip_or_no<-readline(prompt="Would you like to compress required files? May take a while (Y/N):")
+  if (zip_or_no=='Y') {
     print('compressing files; this may take a bit')
     system('gzip *.bed')
     system('gzip *.txt')
     system('gzip *.fa')
-  } else if zip_or_no=='N' {
+  } else if (zip_or_no=='N') {
     print('compressing files; this may take a bit')
     system('gzip *.bed')
     system('gzip *.txt')
