@@ -656,11 +656,21 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output) {
   print('writing output')
   setwd(path_to_output)
   data.table::fwrite(compressed_variants, paste('processed_', filename, sep=''), sep = "\t", quote = FALSE, col.names = TRUE, row.names = FALSE)
-  #rezip everything
-  print('compressing files; this may take a bit')
-  system('gzip *.bed')
-  system('gzip *.fa')
-  system('gzip *.txt')
+  #rezip everything if desired
+  zip_or_no<-readline(prompt="Wouly you like to compress required files? May take a while (Y/N):")
+  if zip_or_no=='Y' {
+    print('compressing files; this may take a bit')
+    system('gzip *.bed')
+    system('gzip *.txt')
+    system('gzip *.fa')
+  } else if zip_or_no=='N' {
+    print('compressing files; this may take a bit')
+    system('gzip *.bed')
+    system('gzip *.txt')
+    system('gzip *.fa')
+  } else {
+    print ('not Y/N input; will default to N')
+  }
   #clean workspace
   rm(list = ls())
 }

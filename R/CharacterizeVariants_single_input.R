@@ -319,7 +319,6 @@ CharacterizeVariants_single_input <- function(path_to_output) {
   rm(temp_seq)
 
   ##fetch affinities----
-  reticulate::source_python("RBPamp_aff_local.py")
   path_to_python<-reticulate::conda_list()[[2]][which(reticulate::conda_list()[[1]]=='RBPamp')]
   reticulate::use_python(path_to_python, required = TRUE)
   reticulate::use_condaenv('RBPamp', required=TRUE)
@@ -647,11 +646,21 @@ CharacterizeVariants_single_input <- function(path_to_output) {
     row<-cbind(matches, miR_info, gwas_info, clinvar_info)
     compressed_variants<-rbind(compressed_variants, row)
   }
-  #rezip everything
-  print('compressing files; this may take a bit')
-  system('gzip *.bed')
-  system('gzip *.txt')
-  system('gzip *.fa')
+  #rezip everything if desired
+  zip_or_no<-readline(prompt="Wouly you like to compress required files? May take a while (Y/N):")
+  if zip_or_no=='Y' {
+    print('compressing files; this may take a bit')
+    system('gzip *.bed')
+    system('gzip *.txt')
+    system('gzip *.fa')
+  } else if zip_or_no=='N' {
+    print('compressing files; this may take a bit')
+    system('gzip *.bed')
+    system('gzip *.txt')
+    system('gzip *.fa')
+  } else {
+    print ('not Y/N input; will default to N')
+  }
   #write output
   print('writing output')
   setwd(path_to_output)
