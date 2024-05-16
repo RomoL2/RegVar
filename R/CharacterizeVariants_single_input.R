@@ -654,10 +654,7 @@ CharacterizeVariants_single_input <- function(path_to_output) {
     system('gzip *.txt')
     system('gzip *.fa')
   } else if (zip_or_no=='N') {
-    print('compressing files; this may take a bit')
-    system('gzip *.bed')
-    system('gzip *.txt')
-    system('gzip *.fa')
+    print('files will stay decompressed')
   } else {
     print ('not Y/N input; will default to N')
   }
