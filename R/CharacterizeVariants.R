@@ -18,7 +18,7 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output) {
   project_dir<-stringr::str_extract(project_dir[1], '.*extdata.')
   setwd(project_dir)
   vcf<-data.table::fread(paste(path_to_filename, filename, sep='/'))
-  #vcf<-data.table::fread(paste('~/Dropbox (MIT)/bioinformatics', 'mini_problems.txt', sep='/'))
+  #vcf<-data.table::fread(paste('~/Dropbox (MIT)/bioinformatics', 'output_file8.vcf', sep='/'))
   files<-list.files(path='.', pattern='*.gz')
   if (length(files)>0) {
     system('gunzip *.gz')
@@ -186,7 +186,7 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output) {
       vcf_UTR[!is.na(mergekey), miR_info := paste(mergekey, 'nonCons_family', sep='__')]
       }
   } else {
-    vcf_UTR[, miR_info<-NA]
+    suppressWarnings(vcf_UTR[, miR_info:= NA])
   }
   rm(miR_predictions)
 
@@ -229,7 +229,16 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output) {
                             quads[, .(chrom, chromStart, chromEnd, name = name_2, score, strand)],
                             quads[, .(chrom, chromStart, chromEnd, name = name_3, score, strand)])
     data.table::setkeyv(quads_expanded, c("chrom", "chromStart"))
-    intersection <- rbind(singles, triples_expanded, quads_expanded)
+    if (sum(intersection$allele_count==3)>0) {
+      triples <- intersection[allele_count == 3, ]
+      triples[, c("name_1", "name_2") := data.table::tstrsplit(name, ",", fixed = TRUE)]
+      triples_expanded <- rbind(triples[, .(chrom, chromStart, chromEnd, name = name_1, score, strand)],
+                                triples[, .(chrom, chromStart, chromEnd, name = name_2, score, strand)])
+      data.table::setkeyv(triples_expanded, c("chrom", "chromStart"))
+      intersection <- rbind(singles, triples_expanded, quads_expanded)
+    } else {
+      intersection <- rbind(singles, quads_expanded)
+    }
   } else {
     intersection <- singles
   }
