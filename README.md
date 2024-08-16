@@ -50,7 +50,7 @@ cd /Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar/extdata
 wget https://hgdownload.soe.ucsc.edu/goldenPath/hg38/liftOver/hg38ToHg19.over.chain.gz
 wget https://hgdownload.soe.ucsc.edu/goldenPath/hg19/liftOver/hg19ToHg38.over.chain.gz
 ```
-R package:
+R package (install in R):
 ``` r
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
