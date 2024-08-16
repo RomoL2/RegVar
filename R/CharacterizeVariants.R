@@ -19,7 +19,7 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   project_dir<-stringr::str_extract(project_dir[1], '.*extdata.')
   setwd(project_dir)
   vcf<-data.table::fread(paste(path_to_filename, filename, sep='/'))
-  #vcf<-data.table::fread('~/Dropbox (MIT)/bioinformatics/mini_problems.txt')
+  #vcf<-data.table::fread('~/Dropbox (MIT)/bioinformatics/test/lifted_mini_problems.txt')
   names(vcf)<-c('chrom', 'chromEnd', 'name', 'ref', 'alt', 'qual', 'filter', 'info')
   files<-list.files(path='.', pattern='*.gz')
   if (length(files)>0) {
