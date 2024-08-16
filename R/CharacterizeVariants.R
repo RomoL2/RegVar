@@ -19,7 +19,7 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   project_dir<-stringr::str_extract(project_dir[1], '.*extdata.')
   setwd(project_dir)
   vcf<-data.table::fread(paste(path_to_filename, filename, sep='/'))
-  #vcf<-data.table::fread(paste('~/Dropbox (MIT)/bioinformatics', 'mini_problems.txt', sep='/'))
+  #vcf<-data.table::fread('~/Dropbox (MIT)/bioinformatics/mini_problems.txt')
   names(vcf)<-c('chrom', 'chromEnd', 'name', 'ref', 'alt', 'qual', 'filter', 'info')
   files<-list.files(path='.', pattern='*.gz')
   if (length(files)>0) {
@@ -727,7 +727,7 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
     data.table::setkey(compressed_variants, var_id)
     compressed_variants<-compressed_variants[vars]
     compressed_variants[, 'var_id']<-NULL
-    names(vcf)[names(vcf)=='new_var_id']<-'var_id'
+    names(compressed_variants)[names(compressed_variants)=='new_var_id']<-'var_id'
   }
   
   setcolorder(compressed_variants, c('var_id', 'cadd_var_info', 'phastcons_100', 'phylop_100', 'motif_RBPs', 'motif_cat',
