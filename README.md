@@ -44,6 +44,13 @@ cd /Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar/extdata
 wget https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.fa.gz
 ```
 
+Then, if VCF is in hg19, again in the RBPamp diretory of RegVar, download the liftover files
+``` r
+cd /Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar/extdata
+wget https://hgdownload.soe.ucsc.edu/goldenPath/hg38/liftOver/hg38ToHg19.over.chain.gz
+wget https://hgdownload.soe.ucsc.edu/goldenPath/hg19/liftOver/hg19ToHg38.over.chain.gz
+```
+
 ## Example
 
 Use these functions in R to run RegVar. 
@@ -56,6 +63,7 @@ CharacterizeVariants_single_input('~/')
 
 ```
 For CharacterizeVariants_single_input, the arguments are the output folder
+
 For CharacterizeVariants, the arguments are:
 1. The name of the input vcf file; must be tab delim with 8 columns:
 chrom, pos, id, ref, alt, qual, filter, info
