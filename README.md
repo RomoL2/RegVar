@@ -63,6 +63,7 @@ CharacterizeVariants_single_input('~/')
 
 ```
 For CharacterizeVariants_single_input, the arguments are the output folder
+
 For CharacterizeVariants, the arguments are:
 1. The name of the input vcf file; must be tab delim with 8 columns:
 chrom, pos, id, ref, alt, qual, filter, info
