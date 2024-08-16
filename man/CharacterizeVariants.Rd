@@ -4,7 +4,12 @@
 \alias{CharacterizeVariants}
 \title{3'UTR variant characterization}
 \usage{
-CharacterizeVariants(filename, path_to_filename, path_to_output)
+CharacterizeVariants(
+  filename,
+  path_to_filename,
+  path_to_output,
+  input_file_base
+)
 }
 \arguments{
 \item{filename}{The name of the input vcf file; must be tab delim with 8 columns:
@@ -13,6 +18,8 @@ chrom, pos, id, ref, alt, qual, filter, info. Chrom column must be either a numb
 \item{path_to_filename}{The path to the directory where the filename is located}
 
 \item{path_to_output}{The path to the directory where you would like the output written}
+
+\item{input_file_base}{The base of the input vcf file (options are 'hg19' or 'hg38')}
 }
 \value{
 file with variant characterization, named processed_filename
@@ -21,5 +28,5 @@ file with variant characterization, named processed_filename
 3'UTR variant characterization
 }
 \examples{
-CharacterizeVariants('file.vcf', '~/', '/Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar');
+CharacterizeVariants('file.vcf', '~/', '/Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar', 'hg38');
 }
