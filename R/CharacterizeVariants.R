@@ -8,7 +8,12 @@
 #' @param input_file_base The base of the input vcf file (options are 'hg19' or 'hg38')
 #' @examples
 #' CharacterizeVariants('file.vcf', '~/', '~', 'hg38');
-#' @import
+#' @import data.table
+#' @import GenomicRanges
+#' @import reticulate
+#' @import rtracklayer
+#' @import stringi
+#' @import stringr
 #' @export
 CharacterizeVariants <- function(filename, path_to_filename, path_to_output, input_file_base) {
   path_to_package<-paste(.libPaths(), '/RegVar', sep='')
