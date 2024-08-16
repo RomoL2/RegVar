@@ -646,6 +646,15 @@ CharacterizeVariants_single_input <- function(path_to_output) {
     row<-cbind(matches, miR_info, gwas_info, clinvar_info)
     compressed_variants<-rbind(compressed_variants, row)
   }
+  setcolorder(compressed_variants, c('var_id', 'cadd_var_info', 'phastcons_100', 'phylop_100', 'motif_RBPs', 'motif_cat',
+                                     'eclip_tot', 'eqtl_info', 'pred_eqtl', 'gwas_info', 'pred_gwas', 'APA_info', 'PAS_info', 
+                                     'miR_info', 'clinvar_info'))
+  
+  #write output
+  print('writing output')
+  setwd(path_to_output)
+  data.table::fwrite(compressed_variants, paste('processed_', info, sep=''), sep = "\t", quote = FALSE, col.names = TRUE, row.names = FALSE)
+  
   #rezip everything if desired
   zip_or_no<-readline(prompt="Would you like to compress required files? May take a while (Y/N):")
   if (zip_or_no=='Y') {
@@ -658,10 +667,7 @@ CharacterizeVariants_single_input <- function(path_to_output) {
   } else {
     print ('not Y/N input; will default to N')
   }
-  #write output
-  print('writing output')
-  setwd(path_to_output)
-  data.table::fwrite(compressed_variants, paste('processed_', info, sep=''), sep = "\t", quote = FALSE, col.names = TRUE, row.names = FALSE)
-  #clean workspace
+ 
+    #clean workspace
   rm(list = ls())
 }

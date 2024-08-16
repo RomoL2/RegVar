@@ -5,11 +5,12 @@
 #' @param path_to_filename The path to the directory where the filename is located
 #' @param path_to_output The path to the directory where you would like the output written
 #' @return file with variant characterization, named processed_filename
+#' @param input_file_base The base of the input vcf file (options are 'hg19' or 'hg38')
 #' @examples
-#' CharacterizeVariants('file.vcf', '~/', '/Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar');
+#' CharacterizeVariants('file.vcf', '~/', '/Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar', 'hg38');
 #' @import
 #' @export
-CharacterizeVariants <- function(filename, path_to_filename, path_to_output) {
+CharacterizeVariants <- function(filename, path_to_filename, path_to_output, input_file_base) {
   path_to_package<-paste(.libPaths(), '/RegVar', sep='')
   #import and format vcf file (format of columns: chrom, chromEnd, name, ref, alt, info)----
   options(scipen = 999)
@@ -18,18 +19,51 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output) {
   project_dir<-stringr::str_extract(project_dir[1], '.*extdata.')
   setwd(project_dir)
   vcf<-data.table::fread(paste(path_to_filename, filename, sep='/'))
-  #vcf<-data.table::fread(paste('~/Dropbox (MIT)/bioinformatics', 'output_file8.vcf', sep='/'))
+  #vcf<-data.table::fread(paste('~/Dropbox (MIT)/bioinformatics', 'mini_problems.txt', sep='/'))
+  names(vcf)<-c('chrom', 'chromEnd', 'name', 'ref', 'alt', 'qual', 'filter', 'info')
   files<-list.files(path='.', pattern='*.gz')
   if (length(files)>0) {
     system('gunzip *.gz')
   }
-  ##turn vcf into bed and intersect with 3'UTR (bedtools)
-  names(vcf)<-c('chrom', 'chromEnd', 'name', 'ref', 'alt', 'qual', 'filter', 'info')
-  vcf[, c('qual', 'filter') := NULL]
+  
   #format chr column
   if(grepl('chr', vcf$chrom[1], fixed=TRUE)==FALSE) {
     vcf[, chrom := paste('chr', chrom, sep='')]
   }
+  
+  ##convert hg19 input coords to hg38 if necessary
+  allowed_inputs<-c('hg19', 'hg38')
+  if (input_file_base %in% allowed_inputs=='FALSE') {
+    stop("input base is not 'hg19' or 'hg38'")
+  
+    }  else if (input_file_base=='hg19') {
+    vcf[,lift_key := seq(1:nrow(vcf))] #add unique key for liftover
+    
+    coord_s<-as.numeric(as.character(unlist(vcf[,2])))
+    gr_object <- GenomicRanges::GRanges(seqnames=as.character(unlist(vcf[,1])), 
+                                        ranges=IRanges(start=coord_s, end=coord_s),
+                                        names=as.character(unlist(vcf$lift_key)))
+    chain_file_path<-paste(path_to_package, '/extdata/hg19ToHg38.over.chain', sep='')
+    ch <- rtracklayer::import.chain(chain_file_path)
+    seqlevelsStyle(ch) = "UCSC"  # necessary
+    coords_new <- unlist(rtracklayer::liftOver(gr_object, ch))
+    coords_new <- data.table::as.data.table(coords_new)
+    names(coords_new)<-c('chrom', 'new_chromEnd', 'end', 'width', 'strand', 'lift_key')
+    coords_new$lift_key<-as.integer(coords_new$lift_key)
+    
+    #map back to original vcf, remove variants that failed liftover
+    data.table::setkey(vcf, lift_key)
+    data.table::setkey(coords_new, lift_key)
+    if (nrow(vcf)!=nrow(coords_new)) warning('some/all variants did not liftover to hg38')
+    vcf<-vcf[coords_new]
+    vcf[, c('i.chrom', 'chromEnd', 'end', 'width', 'strand', 'lift_key')]<-NULL
+    setcolorder(vcf, c('chrom', 'new_chromEnd', 'name', 'ref', 'alt', 'qual', 'filter', 'info'))
+    names(vcf)[names(vcf)=='new_chromEnd']<-'chromEnd'
+  }
+  
+  ##turn vcf into bed and intersect with 3'UTR (bedtools)
+  vcf[, c('qual', 'filter') := NULL]
+
   #keep only SNVs
   if (nrow(vcf[nchar(ref)!=1 & nchar(alt)!=1,])>0) warning('some variants are not single nucleotide')
   vcf<-vcf[nchar(ref)==1 & nchar(alt)==1,]
@@ -662,10 +696,48 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output) {
   }
   #write output
   compressed_variants<-unique(compressed_variants)
+  
+  #convert hg19 input coords to hg38 if necessary
+  if (input_file_base=='hg19') {
+    vars<-data.table::as.data.table(compressed_variants[,var_id])
+    names(vars)<-'var_id'
+    vars[, c("chrom", "chromEnd", "ref", "alt") := data.table::tstrsplit(var_id, "_", fixed = TRUE)]
+    vars[,lift_key := seq(1:nrow(vars))] #add unique key for liftover
+    coord_s<-as.numeric(as.character(unlist(vars$chromEnd)))
+    gr_object <- GenomicRanges::GRanges(seqnames=as.character(unlist(vars$chrom)), 
+                                        ranges=IRanges(start=coord_s, end=coord_s),
+                                        names=as.character(unlist(vars$lift_key)))
+    chain_file_path<-paste(path_to_package, '/extdata/hg38ToHg19.over.chain', sep='')
+    ch <- rtracklayer::import.chain(chain_file_path)
+    seqlevelsStyle(ch) = "UCSC"  # necessary
+    coords_new <- unlist(rtracklayer::liftOver(gr_object, ch))
+    coords_new <- data.table::as.data.table(coords_new)
+    names(coords_new)<-c('chrom', 'new_chromEnd', 'end', 'width', 'strand', 'lift_key')
+    coords_new$lift_key<-as.integer(coords_new$lift_key)
+    
+    #map back to original vars, remove variants that failed liftover
+    data.table::setkey(vars, lift_key)
+    data.table::setkey(coords_new, lift_key)
+    if (nrow(vars)!=nrow(coords_new)) warning('some/all variants did not liftover back to hg19')
+    vars<-vars[coords_new]
+    vars[, new_var_id := paste(i.chrom, new_chromEnd, ref, alt, sep='_')]
+    vars[, c('i.chrom', 'chromEnd', 'end', 'width', 'strand', 'lift_key', 'ref', 'alt', 'new_chromEnd', 'chrom')]<-NULL
+    #map back to compressed_variants
+    data.table::setkey(vars, var_id)
+    data.table::setkey(compressed_variants, var_id)
+    compressed_variants<-compressed_variants[vars]
+    compressed_variants[, 'var_id']<-NULL
+    names(vcf)[names(vcf)=='new_var_id']<-'var_id'
+  }
+  
+  setcolorder(compressed_variants, c('var_id', 'cadd_var_info', 'phastcons_100', 'phylop_100', 'motif_RBPs', 'motif_cat',
+                                     'eclip_tot', 'eqtl_info', 'pred_eqtl', 'gwas_info', 'pred_gwas', 'APA_info', 'PAS_info', 
+                                     'miR_info', 'clinvar_info'))
   print('writing output')
   setwd(path_to_output)
   data.table::fwrite(compressed_variants, paste('processed_', filename, sep=''), sep = "\t", quote = FALSE, col.names = TRUE, row.names = FALSE)
-  #rezip everything if desired
+  
+    #rezip everything if desired
   zip_or_no<-readline(prompt="Would you like to compress required files? May take a while (Y/N): ")
   if (zip_or_no=='Y') {
     print('compressing files; this may take a bit')
