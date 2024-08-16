@@ -9,9 +9,7 @@
 #' @examples
 #' CharacterizeVariants('file.vcf', '~/', '~', 'hg38');
 #' @import data.table
-#' @import GenomicRanges
 #' @import reticulate
-#' @import rtracklayer
 #' @import stringi
 #' @import stringr
 #' @export
