@@ -44,6 +44,13 @@ cd /Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar/extdata
 wget https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.fa.gz
 ```
 
+Then, if VCF is in hg19, again in the RBPamp diretory of RegVar, download the liftover files
+``` r
+cd /Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar/extdata
+wget https://hgdownload.soe.ucsc.edu/goldenPath/hg38/liftOver/hg38ToHg19.over.chain.gz
+wget https://hgdownload.soe.ucsc.edu/goldenPath/hg19/liftOver/hg19ToHg38.over.chain.gz
+```
+
 ## Example
 
 Use these functions in R to run RegVar. 
@@ -80,3 +87,4 @@ For both functions, the output columns are:
 13. poly A site info (is empty if not within 50NT of a poly A site)
 14. variant microRNA info: miR name, seed type, Pct, strand, context percentile, family conservation, site conservation, separated by two underscores (not all info is available for all variants, listed as NULL if not)
 15. variant ClinVar info, if applicable (within 5NT); see ClinVar documentation for column description
+
