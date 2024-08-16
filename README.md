@@ -47,11 +47,11 @@ wget https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.fa.gz
 ## Example
 
 Use these functions in R to run RegVar. 
-Characterize 3'UTR variants in a standard vcf file with CharacterizeVariants, or a single user-input variant with CharacterizeVariants_single_input:
+Characterize 3'UTR variants in a standard vcf file with CharacterizeVariants (either hg19 or hg38), or a single user-input hg38 variant with CharacterizeVariants_single_input:
 
 ``` r
 library(RegVar)
-CharacterizeVariants('file.vcf', '~/', '~/')
+CharacterizeVariants('file.vcf', '~/', '~/', 'hg38')
 CharacterizeVariants_single_input('~/')
 
 ```
@@ -62,6 +62,7 @@ chrom, pos, id, ref, alt, qual, filter, info
 Chrom column must be either a number (1) or chr# (chr1)
 2. The path to the directory where the vcf file is located
 3. The path to the directory where you would like the output written
+4. The base of the input vcf file (options are 'hg19' or 'hg38')
 
 For both functions, the output columns are:
 1. variant ID: chr_position_ref_alt
@@ -79,4 +80,3 @@ For both functions, the output columns are:
 13. poly A site info (is empty if not within 50NT of a poly A site)
 14. variant microRNA info: miR name, seed type, Pct, strand, context percentile, family conservation, site conservation, separated by two underscores (not all info is available for all variants, listed as NULL if not)
 15. variant ClinVar info, if applicable (within 5NT); see ClinVar documentation for column description
-
