@@ -7,7 +7,7 @@
 #' @return file with variant characterization, named processed_filename
 #' @param input_file_base The base of the input vcf file (options are 'hg19' or 'hg38')
 #' @examples
-#' CharacterizeVariants('file.vcf', '~/', '/Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar', 'hg38');
+#' CharacterizeVariants('file.vcf', '~/', '~', 'hg38');
 #' @import
 #' @export
 CharacterizeVariants <- function(filename, path_to_filename, path_to_output, input_file_base) {
