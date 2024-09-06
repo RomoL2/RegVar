@@ -7,7 +7,7 @@
 #' @import
 #' @export
 CharacterizeVariants_single_input <- function(path_to_output) {
-  path_to_package<-paste(.libPaths(), '/RegVar', sep='')
+  path_to_package<-find.package('RegVar')
   #import and format vcf file (format of columns: chrom, chromEnd, name, ref, alt, info)----
   options(scipen = 999)
   setwd(path_to_package)
@@ -37,14 +37,19 @@ CharacterizeVariants_single_input <- function(path_to_output) {
   vcf<-vcf[, c('chrom', 'chromStart', 'chromEnd', 'name')]
   data.table::fwrite(vcf, 'vcf.bed', sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
 
-  #intersect with UTR (3pseq and ucsc)
-  system('bedtools intersect -a vcf.bed -b all_APA_peak_coords_hg38.bed -wa -wb > vcf_UTR.bed')
+  #intersect with UTR (3pseq if available, otherwise polyAdb)
+  system('bedtools intersect -a vcf.bed -b all_APA_peak_coords_hg38.bed -wa -wb > vcf_UTR.bed') #first try 3pseq dataset
   suppressWarnings(vcf_UTR<-data.table::fread('vcf_UTR.bed'))
-  if( nrow(vcf_UTR)==0 ) stop('variant is not in our canonical UTR coordinates')
+  if( nrow(vcf_UTR)==0 ) {
+    system('bedtools intersect -a vcf.bed -b scott_all_APA_peak_coords_hg38.bed -wa -wb > vcf_UTR.bed') #expand UTR coords
+    suppressWarnings(vcf_UTR<-data.table::fread('vcf_UTR.bed'))
+  } 
+  if(nrow(vcf_UTR)==0 )   stop('variant is not in our canonical UTR coordinates')
   names(vcf_UTR)<-c('chrom', 'chromStart', 'chromEnd', 'info',
                     'chr2', 'isoStart', 'isoStop', 'gene', 'score', 'strand',
                     'number_isos', 'iso_loc', 'UTRstart', 'UTRstop')
   vcf_UTR[, c('chr2', 'score') := NULL]
+
 
   #intersect with eclip----
   print('incorporating eCLIP')
@@ -498,6 +503,17 @@ CharacterizeVariants_single_input <- function(path_to_output) {
   vcf_UTR<-cons_info[vcf_UTR]
   vcf_UTR[, base_id := NULL]
   rm(cons_info)
+  #add scott UTR phastcons info for variants not in 3Pseq
+  scott_cons_info<-data.table::fread('scott_UTR_phastcons.txt')
+  scott_cons_info[, base_id := paste(chrom, chromEnd, sep='_')]
+  vcf_UTR[, base_id := paste(chrom, chromEnd, sep='_')]
+  data.table::setkey(scott_cons_info, base_id)
+  data.table::setkey(vcf_UTR, base_id)
+  vcf_UTR<-scott_cons_info[vcf_UTR]
+  rm(scott_cons_info)
+  vcf_UTR[is.na(i.phastcons_100), i.phastcons_100 := phastcons_100]
+  vcf_UTR[, c('base_id', 'phastcons_100') := NULL]
+  names(vcf_UTR)[names(vcf_UTR)=='i.phastcons_100']<-'phastcons_100'
 
   #predicted eQTL or GWAS (PIP>0.5) based on GLMs----
   print('predicting GWAS or eQTLs')

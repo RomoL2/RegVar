@@ -14,7 +14,7 @@
 #' @import stringr
 #' @export
 CharacterizeVariants <- function(filename, path_to_filename, path_to_output, input_file_base) {
-  path_to_package<-paste(.libPaths(), '/RegVar', sep='')
+  path_to_package<-path_to_package<-find.package('RegVar')
   #import and format vcf file (format of columns: chrom, chromEnd, name, ref, alt, info)----
   options(scipen = 999)
   setwd(path_to_package)
@@ -60,7 +60,7 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
     if (nrow(vcf)!=nrow(coords_new)) warning('some/all variants did not liftover to hg38')
     vcf<-vcf[coords_new]
     vcf[, c('i.chrom', 'chromEnd', 'end', 'width', 'strand', 'lift_key')]<-NULL
-    setcolorder(vcf, c('chrom', 'new_chromEnd', 'name', 'ref', 'alt', 'qual', 'filter', 'info'))
+    data.table::setcolorder(vcf, c('chrom', 'new_chromEnd', 'name', 'ref', 'alt', 'qual', 'filter', 'info'))
     names(vcf)[names(vcf)=='new_chromEnd']<-'chromEnd'
   }
   
@@ -76,15 +76,19 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   vcf<-vcf[, c('chrom', 'chromStart', 'chromEnd', 'name')]
   data.table::fwrite(vcf, 'vcf.bed', sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
 
-  #intersect with UTR (3pseq and ucsc)
-  system('bedtools intersect -a vcf.bed -b all_APA_peak_coords_hg38.bed -wa -wb > vcf_UTR.bed')
+  #intersect with UTR (3pseq if available, otherwise polyAdb)
+  system('bedtools intersect -a vcf.bed -b all_APA_peak_coords_hg38.bed -wa -wb > vcf_UTR.bed') #first try 3pseq dataset
   suppressWarnings(vcf_UTR<-data.table::fread('vcf_UTR.bed'))
-  if(nrow(vcf_UTR)==0 ) stop('variants are not in our canonical UTR coordinates')
-  if(nrow(vcf_UTR)!=nrow(vcf)) warning('some variants are not in canonical UTR coordinates')
+  if( nrow(vcf_UTR)==0 ) {
+    system('bedtools intersect -a vcf.bed -b scott_all_APA_peak_coords_hg38.bed -wa -wb > vcf_UTR.bed') #expand UTR coords
+    suppressWarnings(vcf_UTR<-data.table::fread('vcf_UTR.bed'))
+  } 
+  if(nrow(vcf_UTR)==0 )   stop('variant is not in our canonical UTR coordinates')
   names(vcf_UTR)<-c('chrom', 'chromStart', 'chromEnd', 'info',
                     'chr2', 'isoStart', 'isoStop', 'gene', 'score', 'strand',
                     'number_isos', 'iso_loc', 'UTRstart', 'UTRstop')
   vcf_UTR[, c('chr2', 'score') := NULL]
+  
 
   #intersect with eclip----
   print('incorporating eCLIP')
@@ -549,6 +553,18 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   vcf_UTR<-cons_info[vcf_UTR]
   vcf_UTR[, base_id := NULL]
   rm(cons_info)
+  
+  #add scott UTR phastcons info for variants not in 3Pseq
+  scott_cons_info<-data.table::fread('scott_UTR_phastcons.txt')
+  scott_cons_info[, base_id := paste(chrom, chromEnd, sep='_')]
+  vcf_UTR[, base_id := paste(chrom, chromEnd, sep='_')]
+  data.table::setkey(scott_cons_info, base_id)
+  data.table::setkey(vcf_UTR, base_id)
+  vcf_UTR<-scott_cons_info[vcf_UTR]
+  rm(scott_cons_info)
+  vcf_UTR[is.na(i.phastcons_100), i.phastcons_100 := phastcons_100]
+  vcf_UTR[, c('base_id', 'phastcons_100') := NULL]
+  names(vcf_UTR)[names(vcf_UTR)=='i.phastcons_100']<-'phastcons_100'
 
   #predicted eQTL or GWAS (PIP>0.5) based on GLMs----
   print('predicting GWAS or eQTLs')
@@ -733,7 +749,7 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
     names(compressed_variants)[names(compressed_variants)=='new_var_id']<-'var_id'
   }
   
-  setcolorder(compressed_variants, c('var_id', 'cadd_var_info', 'phastcons_100', 'phylop_100', 'motif_RBPs', 'motif_cat',
+  data.table::setcolorder(compressed_variants, c('var_id', 'cadd_var_info', 'phastcons_100', 'phylop_100', 'motif_RBPs', 'motif_cat',
                                      'eclip_tot', 'eqtl_info', 'pred_eqtl', 'gwas_info', 'pred_gwas', 'APA_info', 'PAS_info', 
                                      'miR_info', 'clinvar_info'))
   print('writing output')
