@@ -22,13 +22,13 @@ Then, in the RegVar directory in command line install the necessary annotation f
 ``` r
 cd /Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar
 rm -r extdata #remove directory with symbolic links
-wget https://zenodo.org/record/10646785/files/extdata.tar.gz 
+wget https://zenodo.org/records/13712854/files/extdata.tar.gz 
 tar -xf extdata.tar.gz #unzip files, makes directory
 ```
 
 Then, again in the RBPamp directory of RegVar in command line create the conda environment for RBPamp (this solve may take quite a while, up to a few hours):
 (source for RBPamp is: https://bitbucket.org/marjens/rbpamp/src/master/)
-Note that RBPamp is the only part of the script that needs to run in a conda environment; bedtools should be installed outside of the environment (base).
+Note that RBPamp is the only part of the script that needs to run in a conda environment; bedtools should be installed outside of the environment (base). 
 ``` r
 cd /Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar/extdata/RBPamp
 conda create --name RBPamp --file requirements.txt -c conda-forge
