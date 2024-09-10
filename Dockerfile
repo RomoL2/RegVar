@@ -53,13 +53,17 @@ RUN rm -r extdata \
 
 
 # install RBPamp
+WORKDIR /usr/local/lib/R/site-library/RegVar/extdata/
+RUN rm -r RBPamp \
+  && git clone https://marjens@bitbucket.org/marjens/RBPamp.git
+
 WORKDIR /usr/local/lib/R/site-library/RegVar/extdata/RBPamp
 RUN mamba create --name RBPamp --file requirements.txt -c conda-forge --yes
 
 
-RUN /opt/conda/envs/RBPamp/bin/pip install future-fstrings --force-reinstall \
- && export CC=gcc \
- && /opt/conda/envs/RBPamp/bin/python setup.py build \
+RUN /opt/conda/envs/RBPamp/bin/pip install future-fstrings --force-reinstall
+RUN export CC=gcc
+RUN /opt/conda/envs/RBPamp/bin/python setup.py build \
  && /opt/conda/envs/RBPamp/bin/python setup.py install
 
 
