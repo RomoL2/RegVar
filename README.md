@@ -6,7 +6,7 @@
 
 The goal of RegVar is to characterize 3'UTR single nucleotide variants by their potential regulatory elements.
 
-## Installation
+## Local installation
 RegVar can be installed on a local computer, or on a computing cluster. Make sure you have updated base R as well as installed devtools to install RegVar.
 
 First: You will need a command line to install RegVar; then it can be used in R. With a mac, use the terminal application. With a PC, you will need to download a terminal: https://learn.microsoft.com/en-us/windows/terminal/install.
@@ -62,12 +62,18 @@ RegVar can be installed in a docker image to improve portability.
 
 First: You will need to download docker (https://www.docker.com/products/docker-desktop/).
 
-Then: in the terminal in the directory with the dockerfile, use the following commands to build the docker image:
+Then: in the terminal in the directory with the dockerfile (with docker running), use the following commands to build the docker image:
 
 ``` r
 cd /Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar
 docker build -t regvar_docker .
 ```
+
+Or: you can pull my docker image.
+``` r
+docker pull lromo/regvar_docker
+```
+
 
 Run the docker container:
 
