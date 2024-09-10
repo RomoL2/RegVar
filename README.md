@@ -57,6 +57,26 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
 BiocManager::install("rtracklayer")
 ```
 
+## Installation with docker
+RegVar can be installed in a docker image to improve portability.
+
+First: You will need to download docker (https://www.docker.com/products/docker-desktop/).
+
+Then: in the terminal in the directory with the dockerfile, use the following commands to build the docker image:
+
+``` r
+cd /Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar
+docker build -t regvar_docker .
+```
+
+Run the docker container:
+
+``` r
+docker run -it regvar_docker
+```
+
+Then you can use the R functions in the docker container terminal as below (will likely require increasing the memory allocation to docker).
+
 ## Example
 
 Use these functions in R to run RegVar. 
