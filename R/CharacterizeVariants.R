@@ -14,7 +14,7 @@
 #' @import stringr
 #' @export
 CharacterizeVariants <- function(filename, path_to_filename, path_to_output, input_file_base) {
-  path_to_package<-path_to_package<-find.package('RegVar')
+  path_to_package<-find.package('RegVar')
   #import and format vcf file (format of columns: chrom, chromEnd, name, ref, alt, info)----
   options(scipen = 999)
   setwd(path_to_package)
