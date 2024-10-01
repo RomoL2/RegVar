@@ -26,6 +26,13 @@ wget https://zenodo.org/records/13738622/files/extdata.tar.gz
 tar -xf extdata.tar.gz #unzip files, makes directory
 ```
 
+Pull the latest version of RBPamp into the newly created directory
+``` r
+cd /Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar/extdata
+! rm -r RBPamp #remove old version
+! git clone https://marjens@bitbucket.org/marjens/RBPamp.git #pull new version
+```
+
 Then, again in the RBPamp directory of RegVar in command line create the conda environment for RBPamp (this solve may take quite a while, up to a few hours):
 (source for RBPamp is: https://bitbucket.org/marjens/rbpamp/src/master/)
 Note that RBPamp is the only part of the script that needs to run in a conda environment; bedtools should be installed outside of the environment (base). 
