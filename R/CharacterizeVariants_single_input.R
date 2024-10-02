@@ -181,6 +181,7 @@ CharacterizeVariants_single_input <- function(path_to_output) {
       vcf_UTR<-miR_predictions[vcf_UTR]
       vcf_UTR[, miR_info := paste(mergekey, miR_info, sep='__')]
       vcf_UTR[, mergekey := NULL]
+      vcf_UTR[, miR_info := gsub('NA', 'nonCons_family', miR_info)]
       #miR_info column: gene_miR_family_miR_family__seed_match__Pct__strand__context_pile__familycons__sitecons
     } else {
       vcf_UTR[, miR_info := paste(mergekey, 'nonCons_family', sep='__')]
@@ -638,6 +639,17 @@ CharacterizeVariants_single_input <- function(path_to_output) {
   vcf_UTR[, pr_gwas := predict(gwas_model, vcf_UTR, type='response')]
   vcf_UTR[, pred_gwas := ifelse(pr_gwas>0.0075, 1, 0)] #best sensitivity/specificity log-odds threshold
 
+  #intersect with ReP sites####
+  top_motifs<-data.table::fread('eclip_scott_top_motif_intersect_new.txt')
+  top_motifs[, c('chrom', 'chromStart', 'chromEnd', 'strand') := data.table::tstrsplit(base_id, '_')]
+  top_motifs[, mkey := paste(chrom, chromEnd, sep='_')]
+  top_motifs[, Rep_info := paste(RBP_peak, strand, sep='_')]
+  top_motifs<-top_motifs[, c('mkey', 'Rep_info')]
+  vcf_UTR[, mkey := paste(chrom, chromEnd, sep='_')]
+  data.table::setkey(vcf_UTR, mkey)
+  data.table::setkey(top_motifs, mkey)
+  vcf_UTR<-top_motifs[vcf_UTR]
+  vcf_UTR[, mkey := NULL]
   #format and write outputs and clean up disc (remove intermediates)----
   print('formatting output')
   #remove intermediates
@@ -648,7 +660,7 @@ CharacterizeVariants_single_input <- function(path_to_output) {
   vcf_UTR[, PAS_info := ifelse(PAS_1<51, 'PAS_proximal', '')]
   vcf_UTR<-vcf_UTR[, .(phastcons_100, phylop_100, cadd_var_info, var_id, motif_RBPs,
                        motif_cat, miR_info, eclip_tot, eqtl_info, gwas_info, clinvar_info,
-                       pred_eqtl, pred_gwas, APA_info, PAS_info)]
+                       pred_eqtl, pred_gwas, APA_info, PAS_info, Rep_info)]
   #collapse (currently multiple entries for same variant that are in/near more than one element)
   unique_vars<-unique(vcf_UTR$var_id)
   compressed_variants<-data.table::data.table()
@@ -664,7 +676,7 @@ CharacterizeVariants_single_input <- function(path_to_output) {
   }
   setcolorder(compressed_variants, c('var_id', 'cadd_var_info', 'phastcons_100', 'phylop_100', 'motif_RBPs', 'motif_cat',
                                      'eclip_tot', 'eqtl_info', 'pred_eqtl', 'gwas_info', 'pred_gwas', 'APA_info', 'PAS_info', 
-                                     'miR_info', 'clinvar_info'))
+                                     'miR_info', 'clinvar_info', 'Rep_info'))
   
   #write output
   print('writing output')

@@ -22,7 +22,7 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   project_dir<-stringr::str_extract(project_dir[1], '.*extdata.')
   setwd(project_dir)
   vcf<-data.table::fread(paste(path_to_filename, filename, sep='/'))
-  #vcf<-data.table::fread('~/Dropbox (MIT)/bioinformatics/test/lifted_mini_problems.txt')
+  #vcf<-data.table::fread('~/Dropbox (MIT)/bioinformatics/chr22_mini.vcf')
   names(vcf)<-c('chrom', 'chromEnd', 'name', 'ref', 'alt', 'qual', 'filter', 'info')
   files<-list.files(path='.', pattern='*.gz')
   if (length(files)>0) {
@@ -79,17 +79,28 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   #intersect with UTR (3pseq if available, otherwise polyAdb)
   system('bedtools intersect -a vcf.bed -b all_APA_peak_coords_hg38.bed -wa -wb > vcf_UTR.bed') #first try 3pseq dataset
   suppressWarnings(vcf_UTR<-data.table::fread('vcf_UTR.bed'))
-  if( nrow(vcf_UTR)==0 ) {
+  if( nrow(vcf_UTR)!=nrow(vcf)) {
+    vcf[, key := paste(chrom, chromStart, sep='_')]
+    vcf_UTR[, UTR_key := paste(V1, V2, sep='_')]
+    vcf_not_UTR<-vcf[!key %in% vcf_UTR$UTR_key]
+    vcf[, key := NULL]
+    vcf_UTR[, UTR_key := NULL]
+    vcf_not_UTR[, key := NULL]
+    data.table::fwrite(vcf_not_UTR, 'vcf.bed', sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
     system('bedtools intersect -a vcf.bed -b scott_all_APA_peak_coords_hg38.bed -wa -wb > vcf_UTR.bed') #expand UTR coords
-    suppressWarnings(vcf_UTR<-data.table::fread('vcf_UTR.bed'))
+    suppressWarnings(vcf_UTR_scott<-data.table::fread('vcf_UTR.bed'))
+    vcf_UTR<-rbind(vcf_UTR, vcf_UTR_scott)
   } 
-  if(nrow(vcf_UTR)==0 )   stop('variant is not in our canonical UTR coordinates')
+  if(nrow(vcf_UTR)==0 )   stop('variants are not in our canonical UTR coordinates')
   names(vcf_UTR)<-c('chrom', 'chromStart', 'chromEnd', 'info',
                     'chr2', 'isoStart', 'isoStop', 'gene', 'score', 'strand',
                     'number_isos', 'iso_loc', 'UTRstart', 'UTRstop')
   vcf_UTR[, c('chr2', 'score') := NULL]
+  n_UTR_vars<-length(unique(paste(vcf_UTR$chrom, vcf_UTR$chromStart, sep='_')))
+  n_input_vars<-length(unique(paste(vcf$chrom, vcf$chromStart, sep='_')))
+  if (n_UTR_vars<n_input_vars) warning(paste((n_input_vars-n_UTR_vars), 
+                                             'variants are not in our canonical UTR'))
   
-
   #intersect with eclip----
   print('incorporating eCLIP')
   vcf_UTR[, tmp_key:=seq(1:nrow(vcf_UTR))]
@@ -222,6 +233,7 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
       vcf_UTR<-miR_predictions[vcf_UTR]
       vcf_UTR[, miR_info := paste(mergekey, miR_info, sep='__')]
       vcf_UTR[, mergekey := NULL]
+      vcf_UTR[, miR_info := gsub('NA', 'nonCons_family', miR_info)]
       #miR_info column: gene_miR_family_miR_family__seed_match__Pct__strand__context_pile__familycons__sitecons
     } else {
       vcf_UTR[!is.na(mergekey), miR_info := paste(mergekey, 'nonCons_family', sep='__')]
@@ -689,6 +701,18 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   vcf_UTR[, pr_gwas := predict(gwas_model, vcf_UTR, type='response')]
   vcf_UTR[, pred_gwas := ifelse(pr_gwas>0.0075, 1, 0)] #best sensitivity/specificity log-odds threshold
 
+  #intersect with ReP sites####
+  top_motifs<-data.table::fread('eclip_scott_top_motif_intersect_new.txt')
+  top_motifs[, c('chrom', 'chromStart', 'chromEnd', 'strand') := data.table::tstrsplit(base_id, '_')]
+  top_motifs[, mkey := paste(chrom, chromEnd, sep='_')]
+  top_motifs[, Rep_info := paste(RBP_peak, strand, sep='_')]
+  top_motifs<-top_motifs[, c('mkey', 'Rep_info')]
+  vcf_UTR[, mkey := paste(chrom, chromEnd, sep='_')]
+  data.table::setkey(vcf_UTR, mkey)
+  data.table::setkey(top_motifs, mkey)
+  vcf_UTR<-top_motifs[vcf_UTR]
+  vcf_UTR[, mkey := NULL]
+  
   #format and write outputs and clean up disc (remove intermediates)----
   print('formatting output')
   #remove intermediates
@@ -699,7 +723,7 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   vcf_UTR[, PAS_info := ifelse(PAS_1<51, 'PAS_proximal', '')]
   vcf_UTR<-vcf_UTR[, .(phastcons_100, phylop_100, cadd_var_info, var_id, motif_RBPs,
                        motif_cat, miR_info, eclip_tot, eqtl_info, gwas_info, clinvar_info,
-                       pred_eqtl, pred_gwas, APA_info, PAS_info)]
+                       pred_eqtl, pred_gwas, APA_info, PAS_info, Rep_info)]
   #collapse (currently multiple entries for same variant that are in/near more than one element)
   unique_vars<-unique(vcf_UTR$var_id)
   compressed_variants<-data.table::data.table()
@@ -712,12 +736,16 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
     matches<-unique(matches)
     row<-cbind(matches, miR_info, gwas_info, clinvar_info)
     compressed_variants<-rbind(compressed_variants, row)
+    if (n%%10000==0) {
+      print(paste0('compressing variant ', n, ' out of ', length(unique_vars)))
+    }
   }
-  #write output
+  ##write output
   compressed_variants<-unique(compressed_variants)
   
   #convert hg19 input coords to hg38 if necessary
   if (input_file_base=='hg19') {
+    print('converting back to hg19')
     vars<-data.table::as.data.table(compressed_variants[,var_id])
     names(vars)<-'var_id'
     vars[, c("chrom", "chromEnd", "ref", "alt") := data.table::tstrsplit(var_id, "_", fixed = TRUE)]
@@ -751,7 +779,7 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   
   data.table::setcolorder(compressed_variants, c('var_id', 'cadd_var_info', 'phastcons_100', 'phylop_100', 'motif_RBPs', 'motif_cat',
                                      'eclip_tot', 'eqtl_info', 'pred_eqtl', 'gwas_info', 'pred_gwas', 'APA_info', 'PAS_info', 
-                                     'miR_info', 'clinvar_info'))
+                                     'miR_info', 'clinvar_info', 'Rep_info'))
   print('writing output')
   setwd(path_to_output)
   data.table::fwrite(compressed_variants, paste('processed_', filename, sep=''), sep = "\t", quote = FALSE, col.names = TRUE, row.names = FALSE)

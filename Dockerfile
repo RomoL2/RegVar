@@ -33,10 +33,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
    && rm -rf /var/lib/apt/lists/*
 
 
-
-
-RUN conda install -n base -c conda-forge mamba
-
+RUN conda install -n base -c conda-forge -y mamba
 
 RUN R -e "install.packages('devtools', dependencies=TRUE)"
 RUN R -e "devtools::install_github('RomoL2/RegVar')"
