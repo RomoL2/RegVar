@@ -127,4 +127,5 @@ For both functions, the output columns are:
 13. poly A site info (is empty if not within 50NT of a poly A site)
 14. variant microRNA info: miR name, seed type, Pct, strand, context percentile, family conservation, site conservation, separated by two underscores (not all info is available for all variants, listed as NULL if not)
 15. variant ClinVar info, if applicable (within 5NT); see ClinVar documentation for column description
+16. variant ReP sites (RBP and strand)
 
