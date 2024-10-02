@@ -6,7 +6,7 @@
 
 The goal of RegVar is to characterize 3'UTR single nucleotide variants by their potential regulatory elements.
 
-## Installation
+## Local installation
 RegVar can be installed on a local computer, or on a computing cluster. Make sure you have updated base R as well as installed devtools to install RegVar.
 
 First: You will need a command line to install RegVar; then it can be used in R. With a mac, use the terminal application. With a PC, you will need to download a terminal: https://learn.microsoft.com/en-us/windows/terminal/install.
@@ -24,6 +24,13 @@ cd /Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar
 rm -r extdata #remove directory with symbolic links
 wget https://zenodo.org/records/13738622/files/extdata.tar.gz 
 tar -xf extdata.tar.gz #unzip files, makes directory
+```
+
+Pull the latest version of RBPamp into the newly created directory
+``` r
+cd /Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar/extdata
+! rm -r RBPamp #remove old version
+! git clone https://marjens@bitbucket.org/marjens/RBPamp.git #pull new version
 ```
 
 Then, again in the RBPamp directory of RegVar in command line create the conda environment for RBPamp (this solve may take quite a while, up to a few hours):
@@ -56,6 +63,32 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 BiocManager::install("rtracklayer")
 ```
+
+## Installation with docker
+RegVar can be installed in a docker image to improve portability.
+
+First: You will need to download docker (https://www.docker.com/products/docker-desktop/).
+
+Then: in the terminal in the directory with the dockerfile (with docker running), use the following commands to build the docker image:
+
+``` r
+cd /Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar
+docker build -t regvar_docker .
+```
+
+Or: you can pull my docker image.
+``` r
+docker pull lromo/regvar_docker
+```
+
+
+Run the docker container:
+
+``` r
+docker run -it regvar_docker
+```
+
+Then you can use the R functions in the docker container terminal as below (will likely require increasing the memory allocation to docker).
 
 ## Example
 
