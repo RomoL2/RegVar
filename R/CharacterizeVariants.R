@@ -38,8 +38,8 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   allowed_inputs<-c('hg19', 'hg38')
   if (input_file_base %in% allowed_inputs=='FALSE') {
     stop("input base is not 'hg19' or 'hg38'")
-  
-    }  else if (input_file_base=='hg19') {
+    
+  }  else if (input_file_base=='hg19') {
     vcf[,lift_key := seq(1:nrow(vcf))] #add unique key for liftover
     
     coord_s<-as.numeric(as.character(unlist(vcf[,2])))
@@ -66,7 +66,7 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   
   ##turn vcf into bed and intersect with 3'UTR (bedtools)
   vcf[, c('qual', 'filter') := NULL]
-
+  
   #keep only SNVs
   if (nrow(vcf[nchar(ref)!=1 & nchar(alt)!=1,])>0) warning('some variants are not single nucleotide')
   vcf<-vcf[nchar(ref)==1 & nchar(alt)==1,]
@@ -75,7 +75,7 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   vcf[, name := paste(ref, alt, info, sep='__')]
   vcf<-vcf[, c('chrom', 'chromStart', 'chromEnd', 'name')]
   data.table::fwrite(vcf, 'vcf.bed', sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
-
+  
   #intersect with UTR (3pseq if available, otherwise polyAdb)
   system('bedtools intersect -a vcf.bed -b all_APA_peak_coords_hg38.bed -wa -wb > vcf_UTR.bed') #first try 3pseq dataset
   suppressWarnings(vcf_UTR<-data.table::fread('vcf_UTR.bed'))
@@ -122,7 +122,7 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
     vcf_UTR_k562[, tot_eclip_RBP:=data.table::tstrsplit(eclip_id, '_')[1]]
     vcf_UTR_k562[, tot_eclip_RBP:=paste(tot_eclip_RBP, 'K562', sep='_')]
   }
-
+  
   #add info to vcf_UTR
   vcf_UTR[, eclip_tot:='']
   for (n in 1:nrow(vcf_UTR)) {
@@ -151,13 +151,13 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   vcf_UTR[, ref := data.table::tstrsplit(info, '__')[[1]]]
   vcf_UTR[, alt := data.table::tstrsplit(info, '__')[[2]]]
   rm(vcf_UTR_hepg2, vcf_UTR_k562)
-
+  
   #eclip_tot column format: RBP_eCLIPcells__RBP_eCLIPcells
-
+  
   #intersect with (nearby +/-5bp) eQTLs----
   print('incorporating eQTLS')
   vcf_UTR[, tmp_key := seq(1:nrow(vcf_UTR))]
-
+  
   #write bed file for intersect, then match back to original
   data.table::fwrite(vcf_UTR[, c('chrom', 'chromStart', 'chromEnd', 'tmp_key')], 'vcf_UTR_tmp.bed', col.names=FALSE, row.names=FALSE, quote=FALSE, sep='\t')
   system('bedtools intersect -a vcf_UTR_tmp.bed -b GTEx_v8_finemapping_DAPG_UTR_for_script.bed -wa -wb > vcf_UTR_eqtls.bed')
@@ -165,15 +165,16 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   if (nrow(tmp)>0) {
     names(tmp)<-c('chrom', 'chromStart', 'chromEnd', 'tmp_key', 'chr2', 'window_start', 'window_stop', 'eqtl_info')
     tmp<-unique(tmp[, .(tmp_key, eqtl_info)]) #eqtls have 3pseq coords, 10bp window around eqtl
-
+    
     #add to vcf file
     data.table::setkey(tmp, tmp_key)
     data.table::setkey(vcf_UTR, tmp_key)
     vcf_UTR<-tmp[vcf_UTR]
+    
   } else {
     vcf_UTR$eqtl_info<-NA
   }
-
+  
   #eqtl info column: chromStart_chromEnd_ref_alt_signalid@tissue_name= PIP[SPIP:size_of_cluster]
   # more specifically:
   # + signalid: ID of a signal cluster. It consists of the name of the gene and the signal index separated by ":". e.g., ENSG00000238009:3 indicates the signal is the third signal from gene ENSG00000238009
@@ -181,7 +182,7 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   # + PIP: SNP posterior inclusion probability. Higher PIP value indicates the SNP is more likely to be the casual eQTL.
   # + SPIP: signal-level posterior_inclusion probability (sum of the PIPs from all members of the signal cluster)
   # + size_of_cluster: number of SNPs in the signal cluster. These member SNPs are in LD, all represent the same underlying association signal
-
+  
   #intersect with (nearby +/-5bp) GWAS----
   print('incorporating GWAS')
   #write bed file for intersect, then match back to original
@@ -191,8 +192,13 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   suppressWarnings(tmp<-data.table::fread('vcf_UTR_gwas.bed'))
   if (nrow(tmp)>0) {
     names(tmp)<-c('chrom', 'chromStart', 'chromEnd', 'tmp_key', 'chr2', 'window_start', 'window_stop', 'gwas_info')
+    #compress signals for variants prox to more than one gwas signal
+    for (n in 1:length(unique(tmp$tmp_key))) {
+      matches<-tmp[tmp_key==unique(tmp$tmp_key)[n],]
+      this_gwas_info<-paste(matches$gwas_info, collapse = "|")
+      tmp[tmp_key == unique(tmp$tmp_key)[n], gwas_info := this_gwas_info]
+    }
     tmp<-unique(tmp[, .(tmp_key, gwas_info)])
-
     #add to vcf file
     data.table::setkey(tmp, tmp_key)
     data.table::setkey(vcf_UTR, tmp_key)
@@ -201,7 +207,7 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
     vcf_UTR$gwas_info<-NA
   }
   #gwas info column: chromStart, chromEnd, rsID, minor_allele, ref, alt, fine_map, pheno, maf, effect_size, pip
-
+  
   #intersect with microRNAs from TargetScan----
   print('incorporating microRNAs')
   vcf_UTR[, tmp_key := seq(1:nrow(vcf_UTR))]
@@ -212,16 +218,11 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   if (nrow(tmp)>0) {
     names(tmp)<-c('chrom', 'chromStart', 'chromEnd', 'tmp_key', 'chr2', 'miRstart', 'miRstop', 'mergekey')
     tmp<-unique(tmp[, .(tmp_key, mergekey)])
-
-    #add miR mergekey (unique key to match miR bed locations to full miR info file) to vcf file
-    data.table::setkey(tmp, tmp_key)
-    data.table::setkey(vcf_UTR, tmp_key)
-    vcf_UTR<-tmp[vcf_UTR]
-
+    
     #merge with rest of miR info using mergekey
     miR_predictions<-data.table::fread('hg38_miR_predictions_final.txt')
     #miR predictions only has conserved families to save disc space; remove non-conserved from vcf here
-    vcf_UTR_tmp<-vcf_UTR[mergekey %in% miR_predictions$mergekey,]
+    vcf_UTR_tmp<-tmp[mergekey %in% miR_predictions$mergekey,]
     if (nrow(vcf_UTR_tmp)>0) {
       miR_predictions[, cons := substr(cons, 1, nchar(cons)-4)]
       miR_predictions[, i.cons := substr(i.cons, 1, nchar(i.cons)-4)]
@@ -229,20 +230,31 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
       miR_predictions[, miR_info := paste(miR_family, seed_match, Pct, strand, context_pile, cons, i.cons, sep='__')]
       miR_predictions<-miR_predictions[, .(mergekey, miR_info)]
       data.table::setkey(miR_predictions, mergekey)
-      data.table::setkey(vcf_UTR, mergekey)
-      vcf_UTR<-miR_predictions[vcf_UTR]
-      vcf_UTR[, miR_info := paste(mergekey, miR_info, sep='__')]
-      vcf_UTR[, mergekey := NULL]
-      vcf_UTR[, miR_info := gsub('NA', 'nonCons_family', miR_info)]
+      data.table::setkey(tmp, mergekey)
+      tmp<-miR_predictions[tmp]
+      tmp[is.na(miR_info), miR_info := 'nonCons_family']
+      tmp[, miR_info := paste(mergekey, miR_info, sep='__')]
+      tmp[, mergekey := NULL]
       #miR_info column: gene_miR_family_miR_family__seed_match__Pct__strand__context_pile__familycons__sitecons
     } else {
-      vcf_UTR[!is.na(mergekey), miR_info := paste(mergekey, 'nonCons_family', sep='__')]
-      }
+      tmp[!is.na(mergekey), miR_info := paste(mergekey, 'nonCons_family', sep='__')]
+    }
+    #compress miR info for variants in more than one miR
+    for (n in 1:length(unique(tmp$tmp_key))) {
+      matches<-tmp[tmp_key==unique(tmp$tmp_key)[n],]
+      this_miR_info<-paste(matches$miR_info, collapse = "|")
+      tmp[tmp_key == unique(tmp$tmp_key)[n], miR_info := this_miR_info]
+    }
+    tmp<-unique(tmp[, .(tmp_key, miR_info)])
+    #add to VCF
+    data.table::setkey(tmp, tmp_key)
+    data.table::setkey(vcf_UTR, tmp_key)
+    vcf_UTR<-tmp[vcf_UTR]
   } else {
     suppressWarnings(vcf_UTR[, miR_info:= NA])
   }
   rm(miR_predictions)
-
+  
   #RBP affinity scoring with RBPamp (need installed locally first)----
   print('incorporating RBP motifs')
   ##prep variants ----
@@ -250,11 +262,11 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   names_BED_std <- c("chrom", "chromStart", "chromEnd", "name", "score", "strand")
   data.table::fwrite(unique(vcf_UTR[, c('chrom', 'chromStart', 'chromEnd', 'RBPamp_info', 'gene', 'strand')]), 'vcf_UTR_tmp.bed', col.names=FALSE, row.names=FALSE, quote=FALSE, sep='\t')
   system('sort -V vcf_UTR_tmp.bed > nat_sorted_vcf_UTR_tmp.bed')
-
+  
   # merge BY STRAND to get final file (use d -1 to avoid merging bookended adjacent features)
   system("bedtools merge -i  nat_sorted_vcf_UTR_tmp.bed -s -d -1 -c 4,5,6 -o distinct,distinct,distinct > merged_by_strand_nat_sorted_vcf_UTR_tmp.bed")
   # note: this will also merge multi-allelic sites (with more than one alt), so need to expand them below
-
+  
   # read intersection in
   intersection <- data.table::fread("merged_by_strand_nat_sorted_vcf_UTR_tmp.bed", header = FALSE)
   names(intersection) <- names_BED_std
@@ -263,7 +275,7 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   if(max(intersection$allele_count)>4) {
     stop('more than four alleles at chromosome position')
   }
-
+  
   ## expand multi-allelic sites if present (separate and expand so there is one line per allele)
   # isolate single allele variants from original datatable
   singles <- intersection[allele_count == 2, ..names_BED_std]
@@ -296,26 +308,26 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
     intersection <- singles
   }
   variants<-intersection
-
+  
   suppressWarnings(
     rm(singles, triples_expanded, quads_expanded, triples, quads, intersection)
   )
-
+  
   ##strand conversion ----
   variants[, 'ref_plus' := data.table::tstrsplit(variants$name, "_", fixed = TRUE)[1]]
   variants[, 'alt_plus' := data.table::tstrsplit(variants$name, "_", fixed = TRUE)[2]]
-
+  
   # correct sequence based on strand
   variants[strand == "+", ref_strand := ref_plus]
   variants[strand == "+", alt_strand := alt_plus]
   variants[strand == "-", ref_strand := stringi::stri_reverse(chartr("ACGT", "TGCA", ref_plus))]
   variants[strand == "-", alt_strand := stringi::stri_reverse(chartr("ACGT", "TGCA", alt_plus))]
-
+  
   # re-package name w/ !stranded! ref/alt
   variants[, name := paste(name, ref_strand, alt_strand, sep = "_")] #first two are original vcf, second are w/ strand conversion
   # remove un-needed columns
   variants <- variants[, ..names_BED_std]
-
+  
   ##add sequence contexts and write files ----
   # set dist to add to either side of variant (for full context to determine if focal or non focal)
   # use 43 bases (mean of eCLIP peaks = 66, plus/minus 10, divided by 2)
@@ -323,31 +335,31 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   # update chromStart and chromEnd (gives a total of 87, but allows even extension on both sides which is important for subsequent steps)
   variants[, chromStart_k := as.integer(chromStart - k_to_add_full)]
   variants[, chromEnd_k := as.integer(chromEnd + k_to_add_full)]
-
+  
   # add original chromStart and chromEnd for the variant to the name column
   variants[, name := paste(chromStart, chromEnd, name, sep = "_")]
-
+  
   # write to file
   data.table::fwrite(variants[, .(chrom, chromStart_k, chromEnd_k, name, score, strand)], "nat_sorted_vcf_UTR_tmp_intersected_expanded_RNA_strand_PLUS_k_for_seq2.bed", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
   # fetch surrounding sequences
   system("bedtools getfasta -bedOut -s -fi hg38.fa -bed nat_sorted_vcf_UTR_tmp_intersected_expanded_RNA_strand_PLUS_k_for_seq2.bed > nat_sorted_vcf_UTR_tmp_intersected_expanded_RNA_strand_PLUS_k_for_seq2.txt")
-
+  
   # read back in
   variants <- data.table::fread("nat_sorted_vcf_UTR_tmp_intersected_expanded_RNA_strand_PLUS_k_for_seq2.txt", header = FALSE)
   if (nrow(variants)==0) stop('no hg38, did you forget to install first?')
   names(variants) <- c(names_BED_std, "seq")
   variants[, c("chromStart", "chromEnd") := NULL]
-
+  
   # hg38.fa is a soft-masked file. bases covered by repeat masker are shown in lower case
   # convert to upper-case
   variants[, seq := toupper(seq)]
-
+  
   # remove any entries with N base calls
   variants <- variants[!(grepl("N", variants[, seq], fixed = TRUE)), ]
-
+  
   # extract reference base from seq
   variants[, ref_base := substr(seq, k_to_add_full + 1, k_to_add_full + 1)]
-
+  
   #NTs in name: first two are original vcf, second are w/ strand conversion
   variants[, c("chromStart", "chromEnd", "ref", "alt", "ref_conv", "alt_conv") := data.table::tstrsplit(name, "_", fixed = TRUE)]
   if(sum(variants[, ref_base == ref_conv]) != nrow(variants)) {
@@ -355,17 +367,17 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   } # make sure base from hg38 fasta matches strand-converted base from variant call data
   #restore name column
   variants[, name:= paste(chromStart, chromEnd, ref, alt, sep='_')]
-
+  
   # set desired sequence window for calculating affinity of RBP binding sites overlapping variant (use k = 11 for max, corresponds to max footprint size used by RBPamp, and k = 10 for some RBPs)
   k_to_add_var <- 11
   variants[, seq_ref_11 := substr(seq, (k_to_add_full + 1) - (k_to_add_var -1), (k_to_add_full + 1) + (k_to_add_var -1))]
   k_to_add_var <- 10
   variants[, seq_ref_10 := substr(seq, (k_to_add_full + 1) - (k_to_add_var -1), (k_to_add_full + 1) + (k_to_add_var -1))]
-
+  
   # add alt seq for k = 11 and k = 10
   variants[, seq_alt_11 := paste(substr(seq_ref_11, 1, k_to_add_var -1), ref_conv, substr(seq_ref_11, k_to_add_var + 1, k_to_add_var + k_to_add_var - 1), sep = "")]
   variants[, seq_alt_10 := paste(substr(seq_ref_10, 1, k_to_add_var -1), ref_conv, substr(seq_ref_10, k_to_add_var + 1, k_to_add_var + k_to_add_var - 1), sep = "")]
-
+  
   # write to files
   # full seqs
   temp_seq <- data.table::data.table(seq = unique(variants[, seq]))
@@ -382,13 +394,13 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   data.table::setkey(temp_seq, seq)
   data.table::fwrite(temp_seq, "vars.k_10_seq.txt", sep = "\t", quote = FALSE, col.names = TRUE, row.names = FALSE)
   rm(temp_seq)
-
+  
   ##fetch affinities----
   path_to_python<-reticulate::conda_list()[[2]][which(reticulate::conda_list()[[1]]=='RBPamp')]
   reticulate::use_python(path_to_python, required = TRUE)
   reticulate::use_condaenv('RBPamp', required=TRUE)
   reticulate::source_python("RBPamp_aff_local.py") #need RBP motif files in ./motifs2
-
+  
   #read back in
   full_affs <- data.table::fread("vars.full_seq.RBPamp_affs.motifs.tsv", header = FALSE)
   names(full_affs) <- c("seq", "RBP", "k_RBP", "aff")
@@ -400,7 +412,7 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   data.table::setkey(full_affs, seq)
   data.table::setkey(variants, seq)
   variants <- full_affs[variants, allow.cartesian = TRUE] # allows expansion of variants so there's entries for each RBP
-
+  
   # split into k = 11 RBPs and k = 10 RBPs
   vars_k_11 <- variants[k_RBP == 11, ]
   vars_k_11[, c("seq_ref_10", "seq_alt_10") := NULL]
@@ -408,7 +420,7 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   vars_k_10 <- variants[k_RBP == 10, ]
   vars_k_10[, c("seq_ref_11", "seq_alt_11") := NULL]
   data.table::setnames(vars_k_10, c("seq_ref_10", "seq_alt_10"), c("seq_ref", "seq_alt"))
-
+  
   # add affs to k = 11 entries
   names(k_11_affs) <- c("seq_ref", "RBP", "aff_ref")
   data.table::setkey(k_11_affs, seq_ref, RBP)
@@ -418,7 +430,7 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   data.table::setkey(k_11_affs, seq_alt, RBP)
   data.table::setkey(vars_k_11, seq_alt, RBP)
   vars_k_11 <- k_11_affs[vars_k_11, nomatch = 0]
-
+  
   # add affs to k = 10 entries
   names(k_10_affs) <- c("seq_ref", "RBP", "aff_ref")
   data.table::setkey(k_10_affs, seq_ref, RBP)
@@ -428,53 +440,53 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   data.table::setkey(k_10_affs, seq_alt, RBP)
   data.table::setkey(vars_k_10, seq_alt, RBP)
   vars_k_10 <- k_10_affs[vars_k_10, nomatch = 0]
-
+  
   # combine k = 11 and k = 11 entries back together
   rm(variants)
   variants <- rbind(vars_k_11, vars_k_10)
   rm(vars_k_10, vars_k_11)
-
+  
   #strength threshold
   strong_prop <- 0.33 ##make customizable??
   lost_prop <- 0.33
   pres_prop <- 0.67
-
+  
   variants[aff_ref > strong_prop, motif_strong := 1]
   variants[aff_ref <= strong_prop, motif_strong := 0]
   #lost
   variants[aff_ref > strong_prop & (aff_alt / aff_ref) < lost_prop, cat := "lost"]
   #preserved
   variants[aff_ref > strong_prop & (aff_alt / aff_ref) > pres_prop, cat := "preserved"]
-
+  
   ##collapse variants in more than one RBP motif----
   variants[, base_id:=paste(chrom, chromStart, chromEnd, strand, sep='_')]
   variants[, var_id:=paste(base_id, ref, alt, sep='_')]
   if (nrow(variants[!is.na(cat)])>0) {
-  variants<-variants[!is.na(cat)] #only keep variants in strong motifs
-  unique_vars<-unique(variants$var_id)
-  compressed_variants<-data.table::data.table()
-  variants<-unique(variants[, c('var_id', 'RBP', 'cat')])
-  for (n in 1:length(unique_vars)) {
-    matches<-variants[var_id==unique_vars[n],]
-    if (nrow(matches)>0) {
-      RBPs<-paste(matches$RBP, collapse = "_")
-      cat<-paste(matches$cat, collapse='__')
-      row<-cbind(matches$var_id[1], RBPs, cat)
-      compressed_variants<-rbind(compressed_variants, row)
+    variants<-variants[!is.na(cat)] #only keep variants in strong motifs
+    unique_vars<-unique(variants$var_id)
+    compressed_variants<-data.table::data.table()
+    variants<-unique(variants[, c('var_id', 'RBP', 'cat')])
+    for (n in 1:length(unique_vars)) {
+      matches<-variants[var_id==unique_vars[n],]
+      if (nrow(matches)>0) {
+        RBPs<-paste(matches$RBP, collapse = "_")
+        cat<-paste(matches$cat, collapse='__')
+        row<-cbind(matches$var_id[1], RBPs, cat)
+        compressed_variants<-rbind(compressed_variants, row)
+      }
     }
-  }
   } else {
     compressed_variants<-data.table::data.table(unique(variants$var_id), 'NA', 'NA')
   }
   names(compressed_variants)<-c('var_id', 'motif_RBPs', 'motif_cat')
-
+  
   ##merge RBPamp info back to variants  ----
   vcf_UTR[, RBPamp_info := NULL]
   vcf_UTR[, var_id := paste(chrom, chromStart, chromEnd, strand, ref, alt, sep='_')]
   data.table::setkey(vcf_UTR, var_id)
   data.table::setkey(compressed_variants, var_id)
   vcf_UTR<-compressed_variants[vcf_UTR]
-
+  
   #CADD (only gnomad vars, too much disc space to run whole thing)----
   print('fetching CADD scores for gnomAD variants')
   cadd_gd<-data.table::fread('all_gd_UTR_vars.bed')
@@ -490,9 +502,8 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   vcf_UTR[, merge_id := NULL]
   #cadd_var_info: ref_alt_RawScore_PHRED
   rm(cadd_gd)
-
+  
   #nearby (+/-5bp) ClinVar----
-  print('incorporating ClinVar')
   print('incorporating ClinVar')
   vcf_UTR[, tmp_key := seq(1:nrow(vcf_UTR))]
   data.table::fwrite(vcf_UTR[, c('chrom', 'chromStart', 'chromEnd', 'tmp_key')], 'vcf_UTR_tmp.bed', col.names=FALSE, row.names=FALSE, quote=FALSE, sep='\t')
@@ -504,16 +515,17 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
     #add to vcf file
     tmp<-tmp[, c('tmp_key', 'info')]
     names(tmp)<-c('tmp_key', 'clinvar_info')
+    #combine info for same tmp key
+    for (n in 1:length(unique(tmp$tmp_key))){
+      matches<-tmp[tmp_key==unique(tmp$tmp_key)[n],]
+      this_clinvar_info<-paste(matches$clinvar_info, collapse = "|")
+      tmp[tmp_key == unique(tmp$tmp_key)[n], clinvar_info := this_clinvar_info]
+    }
+    tmp<-unique(tmp)
     data.table::setkey(tmp, tmp_key)
     data.table::setkey(vcf_UTR, tmp_key)
     vcf_UTR<-tmp[vcf_UTR]
-    #combine info for same tmp key
-    for (n in 1:length(unique(tmp$tmp_key))){
-      matches<-tmp[tmp_key==tmp$tmp_key[n],]
-      vcf_UTR[tmp_key==tmp$tmp_key[n], clinvar_info := paste(matches$clinvar_info, collapse='|')]
-    }
     vcf_UTR[, tmp_key := NULL]
-    vcf_UTR<-unique(vcf_UTR)
   } else {
     vcf_UTR$clinvar_info<-NA
   }
@@ -535,7 +547,7 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   ##INFO=<ID=ORIGIN,Number=.,Type=String,Description="Allele origin. One or more of the following values may be added: 0 - unknown; 1 - germline; 2 - somatic; 4 - inherited; 8 - paternal; 16 - maternal; 32 - de-novo; 64 - biparental; 128 - uniparental; 256 - not-tested; 512 - tested-inconclusive; 1073741824 - other">
   ##INFO=<ID=RS,Number=.,Type=String,Description="dbSNP ID (i.e. rs number)">
   ##INFO=<ID=SSR,Number=1,Type=Integer,Description="Variant Suspect Reason Codes. One or more of the following values may be added: 0 - unspecified, 1 - Paralog, 2 - byEST, 4 - oldAlign, 8 - Para_EST, 16 - 1kg_failed, 1024 - other">
-
+  
   #APA info----
   print('incorporating APA info')
   #isoform region
@@ -545,7 +557,7 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   vcf_UTR[number_isos>1 & dvp>0.5 & dvp<1, iso_region:='partially_shared']
   vcf_UTR[number_isos>1 & dvp==1, iso_region:='unique']
   vcf_UTR[, dvp := NULL]
-
+  
   #distance to PAS and stop codon
   vcf_UTR[,PAS_1:=abs(chromEnd-isoStart)]
   vcf_UTR[,PAS_2:=abs(chromEnd-isoStop)]
@@ -553,7 +565,7 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   vcf_UTR[PAS_1>=PAS_2, PAS_1:=PAS_2]
   vcf_UTR[,PAS_2:=NULL]
   vcf_UTR[, stop_d:=abs(chromStart-UTRstart)]
-
+  
   #conservation info ----
   print('incorporating conservation scores')
   cons_info<-data.table::fread('LR_all_APA_peak_coords_hg38_by_base.phylop_100.phylop_17.phastcons_100.phastcons_17.txt')
@@ -577,7 +589,7 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   vcf_UTR[is.na(i.phastcons_100), i.phastcons_100 := phastcons_100]
   vcf_UTR[, c('base_id', 'phastcons_100') := NULL]
   names(vcf_UTR)[names(vcf_UTR)=='i.phastcons_100']<-'phastcons_100'
-
+  
   #predicted eQTL or GWAS (PIP>0.5) based on GLMs----
   print('predicting GWAS or eQTLs')
   vcf_UTR[, in_miR:=ifelse(grepl('consFam', miR_info, perl=TRUE) |
@@ -586,7 +598,7 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   vcf_UTR[, cons := ifelse(phastcons_100>0.5, 1, 0)]
   vcf_UTR[, region := ifelse(iso_region=='common' | iso_region=='single', 1, 0)]
   vcf_UTR[, in_eclip := ifelse(eclip_tot!='', 1, 0)]
-
+  
   #GLM for gwas/eqtl
   all_vcf<-data.table::fread('GTEx_v8_finemapping_DAPG_scottUTR_processed.txt')
   #APA info
@@ -624,7 +636,7 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
                    'context_pile', 'fam_con', 'site_con'):=data.table::tstrsplit(site_info, '_')]
   cons_miRs<-all_vcf_miRs[fam_con=='consFam' | fam_con=='broadConsFam']$var_id
   all_vcf[, var_id := paste(base_id, ref, alt, sep='_')]
-
+  
   #GWAS
   gwas_all<-data.table::fread('gwas_scottUTRvars_processed.txt') #includes all phenotypes
   gwas_all[, iso_loc:= data.table::tstrsplit(pseq_UTR_info, '_')[5]]
@@ -651,7 +663,7 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   gwas_all[, var_id := paste(base_id, ref, alt, sep='_')]
   gwas_all[, c('chrom1', 'miR_chromStart', 'miR_chromEnd', 'seed_match', 'Pct',
                'context_pile', 'fam_con', 'site_con'):=data.table::tstrsplit(site_info, '_')]
-
+  
   ##eQTL:
   #define categorical variables that may affect pip
   all_vcf[,in_miR:=ifelse(var_id %in% cons_miRs, 1, 0)]
@@ -667,10 +679,10 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   train_vcf<-rbind(all_vcf[pip>0.95], all_vcf[pip<0.001])
   train_vcf<-na.omit(train_vcf, cols=c('in_eclip', 'PAS_1', 'in_miR', 'phastcons_100', 'region', 'number_isos'))
   test_vcf<-all_vcf[pip>0.001 & pip<0.95,]
-
+  
   eqtl_model<-glm(pip_model~in_eclip+PAS+in_miR+cons+region+number_isos,
                   family  = binomial, data=train_vcf)
-
+  
   ##GWAS:
   #define categorical variables that may affect pip
   names(gwas_all)[names(gwas_all)=='iso_number']<-'number_isos'
@@ -690,17 +702,17 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   train_gwas<-gwas_all[sample_key %in% sample(gwas_all$sample_key, 270000),]
   test_gwas<-gwas_all[!sample_key %in% train_gwas$sample_key,]
   train_gwas<-na.omit(train_gwas, cols=c('in_eclip', 'PAS_1', 'in_miR', 'phastcons_100', 'region', 'number_isos'))
-
+  
   #model
   gwas_model<-glm(pip_model~in_eclip+PAS+in_miR+cons+region+number_isos,
                   family  = binomial, data=train_gwas)
-
+  
   #apply model to user data
   vcf_UTR[, pr_eqtl := predict(eqtl_model, vcf_UTR, type='response')]
   vcf_UTR[, pred_eqtl := ifelse(pr_eqtl>0.1, 1, 0)] #best sensitivity/specificity log-odds threshold
   vcf_UTR[, pr_gwas := predict(gwas_model, vcf_UTR, type='response')]
   vcf_UTR[, pred_gwas := ifelse(pr_gwas>0.0075, 1, 0)] #best sensitivity/specificity log-odds threshold
-
+  
   #intersect with ReP sites####
   top_motifs<-data.table::fread('eclip_scott_top_motif_intersect_new.txt')
   top_motifs[, c('chrom', 'chromStart', 'chromEnd', 'strand') := data.table::tstrsplit(base_id, '_')]
@@ -724,24 +736,8 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   vcf_UTR<-vcf_UTR[, .(phastcons_100, phylop_100, cadd_var_info, var_id, motif_RBPs,
                        motif_cat, miR_info, eclip_tot, eqtl_info, gwas_info, clinvar_info,
                        pred_eqtl, pred_gwas, APA_info, PAS_info, Rep_info)]
-  #collapse (currently multiple entries for same variant that are in/near more than one element)
-  unique_vars<-unique(vcf_UTR$var_id)
-  compressed_variants<-data.table::data.table()
-  for (n in 1:length(unique_vars)) {
-    matches<-vcf_UTR[var_id==unique_vars[n],]
-    miR_info<-paste(matches$miR_info, collapse = "|")
-    gwas_info<-paste(matches$gwas_info, collapse = "|")
-    clinvar_info<-paste(matches$clinvar_info, collapse = "|")
-    matches[, c('miR_info', 'gwas_info', 'clinvar_info') := NULL]
-    matches<-unique(matches)
-    row<-cbind(matches, miR_info, gwas_info, clinvar_info)
-    compressed_variants<-rbind(compressed_variants, row)
-    if (n%%10000==0) {
-      print(paste0('compressing variant ', n, ' out of ', length(unique_vars)))
-    }
-  }
-  ##write output
-  compressed_variants<-unique(compressed_variants)
+  compressed_variants<-vcf_UTR
+  rm(vcf_UTR)
   
   #convert hg19 input coords to hg38 if necessary
   if (input_file_base=='hg19') {
@@ -777,14 +773,15 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
     names(compressed_variants)[names(compressed_variants)=='new_var_id']<-'var_id'
   }
   
+  ##write the output
   data.table::setcolorder(compressed_variants, c('var_id', 'cadd_var_info', 'phastcons_100', 'phylop_100', 'motif_RBPs', 'motif_cat',
-                                     'eclip_tot', 'eqtl_info', 'pred_eqtl', 'gwas_info', 'pred_gwas', 'APA_info', 'PAS_info', 
-                                     'miR_info', 'clinvar_info', 'Rep_info'))
+                                                 'eclip_tot', 'eqtl_info', 'pred_eqtl', 'gwas_info', 'pred_gwas', 'APA_info', 'PAS_info', 
+                                                 'miR_info', 'clinvar_info', 'Rep_info'))
   print('writing output')
   setwd(path_to_output)
   data.table::fwrite(compressed_variants, paste('processed_', filename, sep=''), sep = "\t", quote = FALSE, col.names = TRUE, row.names = FALSE)
   
-    #rezip everything if desired
+  #rezip everything if desired
   zip_or_no<-readline(prompt="Would you like to compress required files? May take a while (Y/N): ")
   if (zip_or_no=='Y') {
     print('compressing files; this may take a bit')
