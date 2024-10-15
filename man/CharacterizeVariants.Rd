@@ -28,5 +28,5 @@ file with variant characterization, named processed_filename
 3'UTR variant characterization
 }
 \examples{
-CharacterizeVariants('file.vcf', '~/', '/Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar', 'hg38');
+CharacterizeVariants('file.vcf', '~/', '~', 'hg38');
 }
