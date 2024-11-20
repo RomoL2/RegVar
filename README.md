@@ -78,7 +78,7 @@ docker build -t regvar_docker .
 
 Or: you can pull my docker image.
 ``` r
-docker pull lromo/regvar_docker
+docker pull romol2/regvar_docker
 ```
 
 
