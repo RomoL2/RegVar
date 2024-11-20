@@ -41,7 +41,7 @@ RUN R -e "devtools::install_github('RomoL2/RegVar')"
 
 WORKDIR /usr/local/lib/R/site-library/RegVar
 RUN rm -r extdata \
- && wget https://zenodo.org/records/13883287/files/extdata.tar.gz \
+ && wget https://zenodo.org/records/14189342/files/extdata.tar.gz \
  && tar -xf extdata.tar.gz \
  && rm extdata.tar.gz \
  && cd extdata \
