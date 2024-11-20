@@ -22,7 +22,7 @@ Then, in the RegVar directory in command line install the necessary annotation f
 ``` r
 cd /Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar
 rm -r extdata #remove directory with symbolic links
-wget https://zenodo.org/records/13738622/files/extdata.tar.gz 
+wget https://zenodo.org/records/14189342/files/extdata.tar.gz 
 tar -xf extdata.tar.gz #unzip files, makes directory
 ```
 
