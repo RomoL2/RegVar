@@ -20,6 +20,18 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   setwd(path_to_package)
   project_dir<-list.files(pattern = "fai$", recursive = TRUE)[1]
   project_dir<-stringr::str_extract(project_dir[1], '.*extdata.')
+<<<<<<< HEAD
+<<<<<<< HEAD
+  #strip header if present
+  setwd(path_to_filename)
+  system(paste("grep -v '^#'", filename, '> stripped.vcf'))
+  vcf<-data.table::fread(paste(path_to_filename, 'stripped.vcf', sep='/'))
+  #remove file
+  system('rm stripped.vcf')
+=======
+>>>>>>> parent of a862c1f (fixed missing files in annotation folder)
+=======
+>>>>>>> parent of a862c1f (fixed missing files in annotation folder)
   setwd(project_dir)
   vcf<-data.table::fread(paste(path_to_filename, filename, sep='/'))
   #vcf<-data.table::fread('~/Dropbox (MIT)/bioinformatics/chr22_mini.vcf')
