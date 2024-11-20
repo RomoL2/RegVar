@@ -1,0 +1,4 @@
+include RBPamp/ska_kmers.pyx
+include README.md
+include LICENSE
+include MANIFEST.in
