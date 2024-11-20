@@ -17,14 +17,15 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   path_to_package<-find.package('RegVar')
   #import and format vcf file (format of columns: chrom, chromEnd, name, ref, alt, info)----
   options(scipen = 999)
-  setwd(path_to_package)
-  project_dir<-list.files(pattern = "fai$", recursive = TRUE)[1]
-  project_dir<-stringr::str_extract(project_dir[1], '.*extdata.')
   #strip header if present
   setwd(path_to_filename)
   system(paste("grep -v '^#'", filename, '> stripped.vcf'))
   vcf<-data.table::fread(paste(path_to_filename, 'stripped.vcf', sep='/'))
+  vcf<-vcf[, 1:8]
   system('rm stripped.vcf')
+  setwd(path_to_package)
+  project_dir<-list.files(pattern = "fai$", recursive = TRUE)[1]
+  project_dir<-stringr::str_extract(project_dir[1], '.*extdata.')
   setwd(project_dir)
   vcf<-data.table::fread(paste(path_to_filename, filename, sep='/'))
   names(vcf)<-c('chrom', 'chromEnd', 'name', 'ref', 'alt', 'qual', 'filter', 'info')
