@@ -640,6 +640,7 @@ CharacterizeVariants_single_input <- function(path_to_output) {
   vcf_UTR[, pred_gwas := ifelse(pr_gwas>0.0075, 1, 0)] #best sensitivity/specificity log-odds threshold
 
   #intersect with ReP sites####
+  setwd(paste0(path_to_package, '/extdata'))
   top_motifs<-data.table::fread('eclip_scott_top_motif_intersect_new.txt')
   top_motifs[, c('chrom', 'chromStart', 'chromEnd', 'strand') := data.table::tstrsplit(base_id, '_')]
   top_motifs[, mkey := paste(chrom, chromEnd, sep='_')]
