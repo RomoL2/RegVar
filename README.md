@@ -51,7 +51,7 @@ cd /Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar/extdata
 wget https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.fa.gz
 ```
 
-Then, if VCF is in hg19, again in the RBPamp diretory of RegVar, download the liftover files and R package
+Then, if VCF is in hg19, again in the extdata diretory of RegVar, download the liftover files and R package
 ``` r
 cd /Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar/extdata
 wget https://hgdownload.soe.ucsc.edu/goldenPath/hg38/liftOver/hg38ToHg19.over.chain.gz
