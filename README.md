@@ -45,7 +45,7 @@ python setup.py build #there will be a lot of warnings in the window; don't worr
 python setup.py install
 ```
 
-Then, again in the RBPamp diretory of RegVar, download the hg38 fasta (large file, zipped is ~1GB)
+Then, in the extdata diretory of RegVar, download the hg38 fasta (large file, zipped is ~1GB)
 ``` r
 cd /Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar/extdata
 wget https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.fa.gz
