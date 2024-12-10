@@ -29,8 +29,8 @@ tar -xf extdata.tar.gz #unzip files, makes directory
 Pull the latest version of RBPamp into the newly created directory
 ``` r
 cd /Library/Frameworks/R.framework/Versions/4.0/Resources/library/RegVar/extdata
-! rm -r RBPamp #remove old version
-! git clone https://marjens@bitbucket.org/marjens/RBPamp.git #pull new version
+rm -r RBPamp #remove old version
+git clone https://marjens@bitbucket.org/marjens/RBPamp.git #pull new version
 ```
 
 Then, again in the RBPamp directory of RegVar in command line create the conda environment for RBPamp (this solve may take quite a while, up to a few hours):
