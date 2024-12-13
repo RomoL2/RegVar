@@ -726,6 +726,7 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   top_motifs[, Rep_info := paste(RBP_peak, strand, sep='_')]
   top_motifs<-top_motifs[, c('mkey', 'Rep_info')]
   vcf_UTR[, mkey := paste(chrom, chromEnd, sep='_')]
+  vcf_UTR[, var_id := paste(chrom, chromEnd, ref, alt sep='_')]
   data.table::setkey(vcf_UTR, mkey)
   data.table::setkey(top_motifs, mkey)
   vcf_UTR<-top_motifs[vcf_UTR]
@@ -736,7 +737,6 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   #remove intermediates
   system('rm vcf.bed vcf_UTR.bed vcf_UTR_tmp.bed vcf_UTR_tmp_hepg2.txt vcf_UTR_tmp_k562.txt vcf_UTR_eqtls.bed vcf_UTR_gwas.bed vcf_UTR_miRs.bed nat_sorted_vcf_UTR_tmp.bed merged_by_strand_nat_sorted_vcf_UTR_tmp.bed nat_sorted_vcf_UTR_tmp_intersected_expanded_RNA_strand_PLUS_k_for_seq2.bed nat_sorted_vcf_UTR_tmp_intersected_expanded_RNA_strand_PLUS_k_for_seq2.txt vars.full_seq.txt vars.k_11_seq.txt vars.k_10_seq.txt vcf_UTR_clinvar.bed vars.k_11_seq.RBPamp_affs.motifs.tsv vars.full_seq.RBPamp_affs.motifs.tsv vars.k_10_seq.RBPamp_affs.motifs.tsv')
   #format output
-  vcf_UTR[, var_id := paste(chrom, chromEnd, ref, alt, sep='_')]
   vcf_UTR[, APA_info := paste(gene, strand, iso_loc, number_isos, iso_region, sep='_')]
   vcf_UTR[, PAS_info := ifelse(PAS_1<51, 'PAS_proximal', '')]
   vcf_UTR<-vcf_UTR[, .(phastcons_100, phylop_100, cadd_var_info, var_id, motif_RBPs,
