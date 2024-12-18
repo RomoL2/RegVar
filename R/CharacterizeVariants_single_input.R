@@ -495,18 +495,22 @@ CharacterizeVariants_single_input <- function(path_to_output) {
 
   #conservation info ----
   print('incorporating conservation scores')
+  vcf_UTR<-unique(vcf_UTR)
   cons_info<-data.table::fread('LR_all_APA_peak_coords_hg38_by_base.phylop_100.phylop_17.phastcons_100.phastcons_17.txt')
-  cons_info[, base_id := paste(chrom, chromStart, chromEnd, sep='_')]
+  cons_info[, base_id := paste(chrom, chromEnd, sep='_')]
   cons_info<-cons_info[, .(base_id, phastcons_100, phylop_100)]
   data.table::setkey(cons_info, base_id)
-  vcf_UTR[, base_id := paste(chrom, chromStart, chromEnd, sep='_')]
+  vcf_UTR[, base_id := paste(chrom, chromEnd, sep='_')]
   data.table::setkey(vcf_UTR, base_id)
   vcf_UTR<-cons_info[vcf_UTR]
   vcf_UTR[, base_id := NULL]
   rm(cons_info)
+  
   #add scott UTR phastcons info for variants not in 3Pseq
   scott_cons_info<-data.table::fread('scott_UTR_phastcons.txt')
   scott_cons_info[, base_id := paste(chrom, chromEnd, sep='_')]
+  scott_cons_info<-scott_cons_info[, .(base_id, phastcons_100)]
+  scott_cons_info<-unique(scott_cons_info)
   vcf_UTR[, base_id := paste(chrom, chromEnd, sep='_')]
   data.table::setkey(scott_cons_info, base_id)
   data.table::setkey(vcf_UTR, base_id)
@@ -652,6 +656,7 @@ CharacterizeVariants_single_input <- function(path_to_output) {
   data.table::setkey(top_motifs, mkey)
   vcf_UTR<-top_motifs[vcf_UTR]
   vcf_UTR[, mkey := NULL]
+  
   #format and write outputs and clean up disc (remove intermediates)----
   print('formatting output')
   #remove intermediates

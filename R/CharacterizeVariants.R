@@ -156,7 +156,6 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   vcf_UTR[, ref := data.table::tstrsplit(info, '__')[[1]]]
   vcf_UTR[, alt := data.table::tstrsplit(info, '__')[[2]]]
   rm(vcf_UTR_hepg2, vcf_UTR_k562)
-  
   #eclip_tot column format: RBP_eCLIPcells__RBP_eCLIPcells
   
   #intersect with (nearby +/-5bp) eQTLs----
@@ -573,11 +572,12 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   
   #conservation info ----
   print('incorporating conservation scores')
+  vcf_UTR<-unique(vcf_UTR)
   cons_info<-data.table::fread('LR_all_APA_peak_coords_hg38_by_base.phylop_100.phylop_17.phastcons_100.phastcons_17.txt')
-  cons_info[, base_id := paste(chrom, chromStart, chromEnd, sep='_')]
+  cons_info[, base_id := paste(chrom, chromEnd, sep='_')]
   cons_info<-cons_info[, .(base_id, phastcons_100, phylop_100)]
   data.table::setkey(cons_info, base_id)
-  vcf_UTR[, base_id := paste(chrom, chromStart, chromEnd, sep='_')]
+  vcf_UTR[, base_id := paste(chrom, chromEnd, sep='_')]
   data.table::setkey(vcf_UTR, base_id)
   vcf_UTR<-cons_info[vcf_UTR]
   vcf_UTR[, base_id := NULL]
@@ -586,6 +586,8 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   #add scott UTR phastcons info for variants not in 3Pseq
   scott_cons_info<-data.table::fread('scott_UTR_phastcons.txt')
   scott_cons_info[, base_id := paste(chrom, chromEnd, sep='_')]
+  scott_cons_info<-scott_cons_info[, .(base_id, phastcons_100)]
+  scott_cons_info<-unique(scott_cons_info)
   vcf_UTR[, base_id := paste(chrom, chromEnd, sep='_')]
   data.table::setkey(scott_cons_info, base_id)
   data.table::setkey(vcf_UTR, base_id)
