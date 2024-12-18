@@ -726,7 +726,7 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   top_motifs[, Rep_info := paste(RBP_peak, strand, sep='_')]
   top_motifs<-top_motifs[, c('mkey', 'Rep_info')]
   vcf_UTR[, mkey := paste(chrom, chromEnd, sep='_')]
-  vcf_UTR[, var_id := paste(chrom, chromEnd, ref, alt sep='_')]
+  vcf_UTR[, var_id := paste(chrom, chromEnd, ref, alt, sep='_')]
   data.table::setkey(vcf_UTR, mkey)
   data.table::setkey(top_motifs, mkey)
   vcf_UTR<-top_motifs[vcf_UTR]
