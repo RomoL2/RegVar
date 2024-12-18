@@ -403,7 +403,7 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   path_to_python<-reticulate::conda_list()[[2]][which(reticulate::conda_list()[[1]]=='RBPamp')]
   reticulate::use_python(path_to_python, required = TRUE)
   reticulate::use_condaenv('RBPamp', required=TRUE)
-  reticulate::source_python("RBPamp_aff_local.py") #need RBP motif files in ./motifs2
+  reticulate::py_run_file("RBPamp_aff_local.py") #need RBP motif files in ./motifs2
   
   #read back in
   full_affs <- data.table::fread("vars.full_seq.RBPamp_affs.motifs.tsv", header = FALSE)
