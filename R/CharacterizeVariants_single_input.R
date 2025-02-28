@@ -298,15 +298,15 @@ CharacterizeVariants_single_input <- function(path_to_output) {
   variants[, name:= paste(chromStart, chromEnd, ref, alt, sep='_')]
 
   # set desired sequence window for calculating affinity of RBP binding sites overlapping variant (use k = 11 for max, corresponds to max footprint size used by RBPamp, and k = 10 for some RBPs)
+  # add alt seq for k = 11 and k = 10
   k_to_add_var <- 11
   variants[, seq_ref_11 := substr(seq, (k_to_add_full + 1) - (k_to_add_var -1), (k_to_add_full + 1) + (k_to_add_var -1))]
+  variants[, seq_alt_11 := paste(substr(seq_ref_11, 1, k_to_add_var -1), alt_conv, substr(seq_ref_11, k_to_add_var + 1, k_to_add_var + k_to_add_var - 1), sep = "")]
+  
   k_to_add_var <- 10
   variants[, seq_ref_10 := substr(seq, (k_to_add_full + 1) - (k_to_add_var -1), (k_to_add_full + 1) + (k_to_add_var -1))]
-
-  # add alt seq for k = 11 and k = 10
-  variants[, seq_alt_11 := paste(substr(seq_ref_11, 1, k_to_add_var -1), ref_conv, substr(seq_ref_11, k_to_add_var + 1, k_to_add_var + k_to_add_var - 1), sep = "")]
-  variants[, seq_alt_10 := paste(substr(seq_ref_10, 1, k_to_add_var -1), ref_conv, substr(seq_ref_10, k_to_add_var + 1, k_to_add_var + k_to_add_var - 1), sep = "")]
-
+  variants[, seq_alt_10 := paste(substr(seq_ref_10, 1, k_to_add_var -1), alt_conv, substr(seq_ref_10, k_to_add_var + 1, k_to_add_var + k_to_add_var - 1), sep = "")]
+  
   # write to files
   # full seqs
   temp_seq <- data.table::data.table(seq = unique(variants[, seq]))
