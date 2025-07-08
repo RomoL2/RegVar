@@ -49,11 +49,11 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
     
     coord_s<-as.numeric(as.character(unlist(vcf[,2])))
     gr_object <- GenomicRanges::GRanges(seqnames=as.character(unlist(vcf[,1])), 
-                                        ranges=IRanges(start=coord_s, end=coord_s),
+                                        ranges=IRanges::IRanges(start=coord_s, end=coord_s),
                                         names=as.character(unlist(vcf$lift_key)))
     chain_file_path<-paste(path_to_package, '/extdata/hg19ToHg38.over.chain', sep='')
     ch <- rtracklayer::import.chain(chain_file_path)
-    seqlevelsStyle(ch) = "UCSC"  # necessary
+    GenomeInfoDb::seqlevelsStyle(ch) = "UCSC"  # necessary
     coords_new <- unlist(rtracklayer::liftOver(gr_object, ch))
     coords_new <- data.table::as.data.table(coords_new)
     names(coords_new)<-c('chrom', 'new_chromEnd', 'end', 'width', 'strand', 'lift_key')
@@ -574,29 +574,11 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   #conservation info ----
   print('incorporating conservation scores')
   vcf_UTR<-unique(vcf_UTR)
-  cons_info<-data.table::fread('LR_all_APA_peak_coords_hg38_by_base.phylop_100.phylop_17.phastcons_100.phastcons_17.txt')
-  cons_info[, base_id := paste(chrom, chromEnd, sep='_')]
-  cons_info<-cons_info[, .(base_id, phastcons_100, phylop_100)]
-  data.table::setkey(cons_info, base_id)
-  vcf_UTR[, base_id := paste(chrom, chromEnd, sep='_')]
-  data.table::setkey(vcf_UTR, base_id)
-  vcf_UTR<-cons_info[vcf_UTR]
-  vcf_UTR[, base_id := NULL]
-  rm(cons_info)
-  
-  #add scott UTR phastcons info for variants not in 3Pseq
-  scott_cons_info<-data.table::fread('scott_UTR_phastcons.txt')
-  scott_cons_info[, base_id := paste(chrom, chromEnd, sep='_')]
-  scott_cons_info<-scott_cons_info[, .(base_id, phastcons_100)]
-  scott_cons_info<-unique(scott_cons_info)
-  vcf_UTR[, base_id := paste(chrom, chromEnd, sep='_')]
-  data.table::setkey(scott_cons_info, base_id)
-  data.table::setkey(vcf_UTR, base_id)
-  vcf_UTR<-scott_cons_info[vcf_UTR]
+  scott_cons_info <- data.table::fread('scott_phastcons_for_script.txt')
+  vcf_UTR[, base_id := paste0(chrom, "_", chromEnd)]
+  vcf_UTR <- scott_cons_info[vcf_UTR, on = "base_id"]
   rm(scott_cons_info)
-  vcf_UTR[is.na(i.phastcons_100), i.phastcons_100 := phastcons_100]
-  vcf_UTR[, c('base_id', 'phastcons_100') := NULL]
-  names(vcf_UTR)[names(vcf_UTR)=='i.phastcons_100']<-'phastcons_100'
+  vcf_UTR[, base_id := NULL]
   
   #predicted eQTL or GWAS (PIP>0.5) based on GLMs----
   print('predicting GWAS or eQTLs')
@@ -742,7 +724,7 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   #format output
   vcf_UTR[, APA_info := paste(gene, strand, iso_loc, number_isos, iso_region, sep='_')]
   vcf_UTR[, PAS_info := ifelse(PAS_1<51, 'PAS_proximal', '')]
-  vcf_UTR<-vcf_UTR[, .(phastcons_100, phylop_100, cadd_var_info, var_id, motif_RBPs,
+  vcf_UTR<-vcf_UTR[, .(phastcons_100, cadd_var_info, var_id, motif_RBPs,
                        motif_cat, miR_info, eclip_tot, eqtl_info, gwas_info, clinvar_info,
                        pred_eqtl, pred_gwas, APA_info, PAS_info, Rep_info)]
   compressed_variants<-vcf_UTR
@@ -783,7 +765,7 @@ CharacterizeVariants <- function(filename, path_to_filename, path_to_output, inp
   }
   
   ##write the output
-  data.table::setcolorder(compressed_variants, c('var_id', 'cadd_var_info', 'phastcons_100', 'phylop_100', 'motif_RBPs', 'motif_cat',
+  data.table::setcolorder(compressed_variants, c('var_id', 'cadd_var_info', 'phastcons_100', 'motif_RBPs', 'motif_cat',
                                                  'eclip_tot', 'eqtl_info', 'pred_eqtl', 'gwas_info', 'pred_gwas', 'APA_info', 'PAS_info', 
                                                  'miR_info', 'clinvar_info', 'Rep_info'))
   print('writing output')
